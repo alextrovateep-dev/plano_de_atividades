@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
 <style>
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:1rem}
   .modal-overlay.active{display:flex}
@@ -74,6 +75,7 @@
         class="h-8 w-auto object-contain"
       >
       <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-semibold border border-gray-200">Painel administrativo</span>
+      <span id="admin-role-badge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#5C8374]/10 text-[#5C8374] border border-[#5C8374]/20 hidden"></span>
     </div>
     <div class="flex items-center gap-4">
       <span id="admin-user-email" class="text-sm text-gray-600 font-medium"></span>
@@ -90,14 +92,38 @@
     </div>
 
     <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
-      <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+      <div class="p-4 bg-gray-50 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h2 class="font-extrabold text-gray-800 tracking-tight">Equipa Teep</h2>
+        <button type="button" onclick="abrirModalTeepAdmin()" class="px-4 py-2 bg-[#5C8374] text-white rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition">Adicionar admin Teep</button>
+      </div>
+      <div class="overflow-x-auto max-h-48 overflow-y-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-100 text-gray-600 uppercase text-[11px] tracking-wider font-bold border-b sticky top-0">
+            <tr>
+              <th class="p-3">E-mail</th>
+              <th class="p-3">Nome</th>
+              <th class="p-3">Papel</th>
+              <th class="p-3 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista-teep-staff" class="divide-y text-gray-700"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+      <div class="p-4 bg-gray-50 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h2 class="font-extrabold text-gray-800 tracking-tight">Clientes em Implantação</h2>
-        <button onclick="abrirModalNovaEmpresa()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-green-700 transition">Nova Empresa</button>
+        <div class="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
+          <input type="search" id="filtro-empresas" placeholder="Filtrar por nome ou código…" class="w-full sm:w-56 px-3 py-2 border rounded-lg text-xs bg-white" oninput="aplicarFiltroEmpresas()">
+          <button onclick="abrirModalNovaEmpresa()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-green-700 transition whitespace-nowrap">Nova Empresa</button>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-100 text-gray-600 uppercase text-[11px] tracking-wider font-bold border-b">
             <tr>
+              <th class="p-3">Código</th>
               <th class="p-3">Nome da Empresa</th>
               <th class="p-3">Login principal</th>
               <th class="p-3 text-center">Ações de Gestão</th>
@@ -226,6 +252,7 @@
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
     <h3 class="text-lg font-bold text-gray-800">Registar Nova Empresa Cliente</h3>
     <form id="form-nova-empresa" class="space-y-3">
+      <p class="text-[11px] text-gray-500 bg-gray-50 border rounded-lg px-3 py-2">O <strong>código do projeto</strong> é gerado automaticamente (número sequencial: 0001, 0002, …).</p>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome da Organização</label><input type="text" id="add-empresa-nome" required class="w-full p-2 border rounded-lg text-sm"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome do contacto</label><input type="text" id="add-empresa-contato" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: João Silva"></div>
       <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
@@ -236,6 +263,29 @@
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="fecharModalNovaEmpresa()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
         <button type="submit" class="px-4 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 shadow-sm">Cadastrar Empresa</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modalTeepAdmin" class="modal-overlay">
+  <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
+    <h3 class="text-lg font-bold text-gray-800">Adicionar administrador Teep</h3>
+    <p class="text-[11px] text-gray-500">Acesso ao painel de todos os projetos (papel <strong>teep_admin</strong>, distinto do admin do cliente).</p>
+    <form id="form-teep-admin" class="space-y-3">
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="teep-admin-email" required class="w-full p-2 border rounded-lg text-sm"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome</label><input type="text" id="teep-admin-nome" class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Maria Teep"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Senha inicial</label><input type="password" id="teep-admin-senha" required minlength="6" class="w-full p-2 border rounded-lg text-sm"></div>
+      <div id="teep-admin-role-wrap" class="hidden">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Papel</label>
+        <select id="teep-admin-role" class="w-full p-2 border rounded-lg text-sm bg-white">
+          <option value="teep_admin">Admin Teep</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="fecharModalTeepAdmin()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
+        <button type="submit" class="px-4 py-1.5 bg-[#5C8374] text-white text-xs font-bold rounded-lg hover:opacity-90">Criar acesso</button>
       </div>
     </form>
   </div>
@@ -267,7 +317,7 @@
         <label class="block text-[10px] font-bold text-gray-500 mb-1">Nível de Permissão</label>
         <select id="new-user-role" class="w-full p-2 border rounded-lg text-xs bg-white font-medium">
           <option value="user">Utilizador Comum (Apenas Leitura)</option>
-          <option value="admin">Administrador da Empresa (Edição Local)</option>
+          <option value="admin">Administrador do cliente (edição do projeto)</option>
         </select>
       </div>
       <button type="submit" class="w-full py-2 bg-gray-800 text-white font-bold text-xs rounded-lg hover:bg-gray-700">Criar Utilizador</button>
@@ -293,9 +343,13 @@
             <option value="admin">Administrador da empresa (edição local)</option>
           </select>
         </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 mb-1">Nova senha (opcional, mín. 6 caracteres)</label>
+          <input type="password" id="edit-user-senha" minlength="6" autocomplete="new-password" class="w-full p-2 border rounded-lg text-xs bg-white" placeholder="Deixe vazio para não alterar">
+          <p class="text-[10px] text-gray-500 mt-1">Define a senha diretamente (requer Cloud Function) ou use o e-mail abaixo.</p>
+        </div>
         <div class="p-2 bg-amber-50 border border-amber-100 rounded-lg">
-          <p class="text-[10px] text-amber-800 mb-2">Para alterar a senha, envie um e-mail de redefinição (link seguro Firebase).</p>
-          <button type="button" id="btn-reset-senha-usuario" class="w-full py-1.5 bg-amber-100 text-amber-900 text-xs font-bold rounded-lg hover:bg-amber-200">Enviar e-mail de nova senha</button>
+          <button type="button" id="btn-reset-senha-usuario" class="w-full py-1.5 bg-amber-100 text-amber-900 text-xs font-bold rounded-lg hover:bg-amber-200">Enviar e-mail de redefinição</button>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
           <button type="button" onclick="voltarListaUsuarios()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
@@ -433,6 +487,13 @@ auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 const secondApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
 const secondAuth = secondApp.auth();
 
+let cloudFunctions = null;
+try {
+  cloudFunctions = firebase.functions();
+} catch (e) {
+  console.warn('Firebase Functions não disponível:', e);
+}
+
 // Matriz Homologada de Horas Técnicas TeepOEE baseada na Quantidade de Coletores Ativos
 const tabelaTeep = [
   {min:1,max:5,horas:32},{min:6,max:10,horas:40},{min:11,max:15,horas:48},{min:16,max:20,horas:56},
@@ -459,8 +520,41 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function isTeepStaffRole(role) {
+  return role === 'superadmin' || role === 'teep_admin';
+}
+
+function isTeepStaff() {
+  return isTeepStaffRole(userRole);
+}
+
+function labelRoleUsuario(role) {
+  if (role === 'superadmin') return 'Superadmin';
+  if (role === 'teep_admin') return 'Admin Teep';
+  if (role === 'admin') return 'Admin cliente';
+  return 'Utilizador';
+}
+
+async function migrarPerfilParaUsuarios(uid) {
+  const legado = await db.collection('users').doc(uid).get();
+  if (!legado.exists) return false;
+  const data = legado.data();
+  await db.collection('usuarios').doc(uid).set(data, { merge: true });
+  await legado.ref.delete();
+  return true;
+}
+
+async function definirSenhaUtilizador(uid, novaSenha) {
+  if (!novaSenha || novaSenha.length < 6) return;
+  if (!cloudFunctions) {
+    throw new Error('Cloud Function não configurada. Publique functions/ (definirSenhaUsuario) no Firebase.');
+  }
+  const fn = cloudFunctions.httpsCallable('definirSenhaUsuario');
+  await fn({ uid, password: novaSenha });
+}
+
 function podeEditarProjeto() {
-  return userRole === 'superadmin' || userRole === 'admin';
+  return isTeepStaff() || userRole === 'admin';
 }
 
 function hojeISO() {
@@ -484,7 +578,8 @@ let tarefaEditId = null;
 let cacheTarefas = [];
 
 // Ouvintes (Listeners) em Tempo Real
-let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null;
+let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null, unsubTeepStaff = null;
+let cacheEmpresasDocs = [];
 let unsubProfissionais = null, unsubTarefas = null, unsubEscopo = null;
 
 // Gestão de Visualização de Telas
@@ -494,9 +589,13 @@ function switchView(viewId) {
 }
 
 function carregarPerfilUsuario(uid) {
-  return db.collection('usuarios').doc(uid).get().then(doc => {
+  return db.collection('usuarios').doc(uid).get().then(async doc => {
     if (doc.exists) return doc;
-    return db.collection('users').doc(uid).get();
+    const legado = await db.collection('users').doc(uid).get();
+    if (!legado.exists) return legado;
+    await db.collection('usuarios').doc(uid).set(legado.data(), { merge: true });
+    await legado.ref.delete();
+    return db.collection('usuarios').doc(uid).get();
   });
 }
 
@@ -510,11 +609,18 @@ auth.onAuthStateChanged(user => {
       if (doc.exists) {
         const udata = doc.data();
         userRole = udata.role;
-        if (userRole === 'superadmin') {
+        if (isTeepStaff()) {
           document.getElementById('admin-user-email').innerText = user.email;
+          const badge = document.getElementById('admin-role-badge');
+          if (badge) {
+            badge.innerText = userRole === 'superadmin' ? 'Superadmin' : 'Admin Teep';
+            badge.classList.remove('hidden');
+          }
+          const roleWrap = document.getElementById('teep-admin-role-wrap');
+          if (roleWrap) roleWrap.classList.toggle('hidden', userRole !== 'superadmin');
           switchView('view-admin');
           iniciarPainelAdmin();
-        } else {
+        } else if (udata.empresaId) {
           currentEmpresaId = udata.empresaId;
           db.collection('empresas').doc(currentEmpresaId).get().then(empDoc => {
             if (!empDoc.exists || !empDoc.data().ativa) {
@@ -528,9 +634,12 @@ auth.onAuthStateChanged(user => {
             switchView('view-empresa');
             iniciarListenersProjeto();
           });
+        } else {
+          alert('Perfil sem empresa associada. Contacte o suporte Teep.');
+          logout();
         }
       } else {
-        alert('Perfil não encontrado em "usuarios" nem em "users". Crie o documento com o UID do Authentication.');
+        alert('Perfil não encontrado. Crie o documento em "usuarios" com o UID do Authentication.');
         logout();
       }
     }).catch(err => {
@@ -575,7 +684,7 @@ document.getElementById('form-login').addEventListener('submit', e => {
 });
 
 function voltarParaAdmin() {
-  if(userRole !== 'superadmin') return;
+  if (!isTeepStaff()) return;
   limparListenersProjeto();
   switchView('view-admin');
 }
@@ -596,6 +705,7 @@ function limparTodosListeners() {
   if(unsubStats) unsubStats();
   if(unsubUsuariosStats) unsubUsuariosStats();
   if(unsubTarefasStats) unsubTarefasStats();
+  if(unsubTeepStaff) unsubTeepStaff();
   limparListenersProjeto();
 }
 function limparListenersProjeto() {
@@ -605,11 +715,83 @@ function limparListenersProjeto() {
 /* ============================================================
    🏢 MÓDULO: PAINEL ADMINISTRATIVO TEEP (SUPERADMIN)
    ============================================================ */
+function renderLinhaEmpresa(doc) {
+  const emp = doc.data();
+  const id = escapeHtml(doc.id);
+  const nome = escapeHtml(emp.nome);
+  const codigo = formatarCodigoEmpresa(emp.codigo);
+  const codigoNum = emp.codigo != null ? Number(emp.codigo) : 'null';
+  const loginPrincipal = escapeHtml(emp.emailAcesso || (String(emp.nomeUsuario||'').includes('@') ? emp.nomeUsuario : '') || emp.nomeUsuario || emp.contato || '—');
+  return `
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 font-mono text-sm font-bold text-[#5C8374]">${codigo}</td>
+          <td class="p-3 font-bold text-gray-800">${nome}</td>
+          <td class="p-3 text-gray-600 text-sm">${loginPrincipal}</td>
+          <td class="p-3 text-center space-x-1">
+            <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)}, ${codigoNum})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200">Utilizadores</button>
+            <button onclick="alternarEstadoEmpresa('${id}', ${!!emp.ativa})" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
+          </td>
+          <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${emp.ativa?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${emp.ativa?'Ativo':'Inativo'}</span></td>
+          <td class="p-3 text-right"><button onclick="entrarComoAdminNaEmpresa('${id}')" class="text-green-600 hover:text-green-800 font-bold text-sm">Acessar →</button></td>
+        </tr>`;
+}
+
+function aplicarFiltroEmpresas() {
+  const tbody = document.getElementById('lista-empresas');
+  if (!tbody) return;
+  const q = (document.getElementById('filtro-empresas')?.value || '').trim().toLowerCase();
+  const filtrados = !q ? cacheEmpresasDocs : cacheEmpresasDocs.filter(doc => {
+    const emp = doc.data();
+    const nome = String(emp.nome || '').toLowerCase();
+    const cod = formatarCodigoEmpresa(emp.codigo).toLowerCase();
+    const login = String(emp.emailAcesso || emp.nomeUsuario || emp.contato || '').toLowerCase();
+    return nome.includes(q) || cod.includes(q) || login.includes(q);
+  });
+  tbody.innerHTML = filtrados.length
+    ? filtrados.map(renderLinhaEmpresa).join('')
+    : '<tr><td colspan="6" class="p-6 text-center text-gray-400 italic">Nenhuma empresa corresponde ao filtro.</td></tr>';
+}
+window.aplicarFiltroEmpresas = aplicarFiltroEmpresas;
+
+function renderListaTeepStaff(docs) {
+  const tbody = document.getElementById('lista-teep-staff');
+  if (!tbody) return;
+  const staff = docs.filter(d => {
+    const r = d.data().role;
+    return (r === 'superadmin' || r === 'teep_admin') && !d.data().empresaId;
+  });
+  if (!staff.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400 italic">Nenhum admin Teep registado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = staff.map(d => {
+    const u = d.data();
+    const uid = escapeHtml(d.id);
+    const isSelf = currentUser && d.id === currentUser.uid;
+    const isSup = u.role === 'superadmin';
+    let acoes = '';
+    if (!isSelf && (userRole === 'superadmin' || !isSup)) {
+      acoes = `<button type="button" onclick="removerTeepStaff('${uid}')" class="text-red-500 hover:text-red-700 font-bold text-xs">Remover</button>`;
+    } else if (isSelf) {
+      acoes = '<span class="text-gray-400 text-[10px]">você</span>';
+    } else {
+      acoes = '<span class="text-gray-400 text-[10px]">—</span>';
+    }
+    return `<tr>
+      <td class="p-3 text-sm">${escapeHtml(u.email || '')}</td>
+      <td class="p-3 text-sm">${escapeHtml(u.nome || '—')}</td>
+      <td class="p-3 text-sm">${labelRoleUsuario(u.role)}</td>
+      <td class="p-3 text-center">${acoes}</td>
+    </tr>`;
+  }).join('');
+}
+
 function iniciarPainelAdmin() {
   if(unsubEmpresas) unsubEmpresas();
   if(unsubStats) unsubStats();
   if(unsubUsuariosStats) unsubUsuariosStats();
   if(unsubTarefasStats) unsubTarefasStats();
+  if(unsubTeepStaff) unsubTeepStaff();
 
   unsubStats = db.collection('empresas').onSnapshot(snap => {
     let tEmp = snap.size, tAct = 0;
@@ -625,30 +807,85 @@ function iniciarPainelAdmin() {
     document.getElementById('stat-tarefas').innerText = snap.size;
   });
 
-  unsubEmpresas = db.collection('empresas').orderBy('nome').onSnapshot(snap => {
-    const tbody = document.getElementById('lista-empresas');
-    tbody.innerHTML = '';
-    snap.docs.forEach(doc => {
-      const emp = doc.data();
-      const id = escapeHtml(doc.id);
-      const nome = escapeHtml(emp.nome);
-      const loginPrincipal = escapeHtml(emp.emailAcesso || (String(emp.nomeUsuario||'').includes('@') ? emp.nomeUsuario : '') || emp.nomeUsuario || emp.contato || '—');
-      tbody.innerHTML += `
-        <tr class="hover:bg-gray-50">
-          <td class="p-3 font-bold text-gray-800">${nome}</td>
-          <td class="p-3 text-gray-600 text-sm">${loginPrincipal}</td>
-          <td class="p-3 text-center space-x-1">
-            <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200">Utilizadores</button>
-            <button onclick="alternarEstadoEmpresa('${id}', ${!!emp.ativa})" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
-          </td>
-          <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${emp.ativa?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${emp.ativa?'Ativo':'Inativo'}</span></td>
-          <td class="p-3 text-right"><button onclick="entrarComoAdminNaEmpresa('${id}')" class="text-green-600 hover:text-green-800 font-bold text-sm">Acessar →</button></td>
-        </tr>`;
+  unsubTeepStaff = db.collection('usuarios')
+    .where('role', 'in', ['superadmin', 'teep_admin'])
+    .onSnapshot(snap => renderListaTeepStaff(snap.docs), err => {
+      console.error(err);
+      const tbody = document.getElementById('lista-teep-staff');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 text-xs">Erro ao carregar equipa Teep</td></tr>';
     });
+
+  unsubEmpresas = db.collection('empresas').orderBy('nome').onSnapshot(snap => {
+    cacheEmpresasDocs = snap.docs;
+    aplicarFiltroEmpresas();
   });
 }
 
+function abrirModalTeepAdmin() {
+  document.getElementById('modalTeepAdmin')?.classList.add('active');
+  const roleWrap = document.getElementById('teep-admin-role-wrap');
+  if (roleWrap) roleWrap.classList.toggle('hidden', userRole !== 'superadmin');
+}
+function fecharModalTeepAdmin() {
+  document.getElementById('modalTeepAdmin')?.classList.remove('active');
+  document.getElementById('form-teep-admin')?.reset();
+}
+window.abrirModalTeepAdmin = abrirModalTeepAdmin;
+window.fecharModalTeepAdmin = fecharModalTeepAdmin;
+
+document.getElementById('form-teep-admin')?.addEventListener('submit', e => {
+  e.preventDefault();
+  const email = document.getElementById('teep-admin-email').value.trim();
+  const nome = document.getElementById('teep-admin-nome').value.trim();
+  const senha = document.getElementById('teep-admin-senha').value;
+  let role = 'teep_admin';
+  if (userRole === 'superadmin') {
+    role = document.getElementById('teep-admin-role')?.value || 'teep_admin';
+  }
+  const btn = e.target.querySelector('button[type="submit"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'A criar…'; }
+
+  secondAuth.createUserWithEmailAndPassword(email, senha)
+    .then(res => db.collection('usuarios').doc(res.user.uid).set({
+      email, nome: nome || email, role, teepStaff: true
+    }))
+    .then(() => { secondAuth.signOut(); fecharModalTeepAdmin(); })
+    .catch(err => alert('Erro ao criar admin Teep: ' + err.message))
+    .finally(() => { if (btn) { btn.disabled = false; btn.textContent = 'Criar acesso'; } });
+});
+
+function removerTeepStaff(uid) {
+  if (uid === currentUser?.uid) { alert('Não pode remover a sua própria conta.'); return; }
+  if (!confirm('Remover este administrador Teep? O login no Authentication mantém-se até remover no Console.')) return;
+  getUsuarioDoc(uid).then(found => {
+    if (!found) return;
+    if (found.doc.data().role === 'superadmin' && userRole !== 'superadmin') {
+      alert('Apenas superadmin pode remover outro superadmin.');
+      return;
+    }
+    return found.doc.ref.delete();
+  }).catch(err => alert(err.message));
+}
+window.removerTeepStaff = removerTeepStaff;
+
 function alternarEstadoEmpresa(id, atual) { db.collection('empresas').doc(id).update({ ativa: !atual }); }
+
+function formatarCodigoEmpresa(codigo) {
+  if (codigo == null || codigo === '') return '—';
+  return String(Number(codigo)).padStart(4, '0');
+}
+
+function reservarProximoCodigoEmpresa() {
+  const ref = db.collection('_config').doc('empresas');
+  return db.runTransaction(transaction =>
+    transaction.get(ref).then(snap => {
+      const ultimo = snap.exists && snap.data().ultimoCodigo != null ? Number(snap.data().ultimoCodigo) : 0;
+      const proximo = ultimo + 1;
+      transaction.set(ref, { ultimoCodigo: proximo }, { merge: true });
+      return proximo;
+    })
+  );
+}
 
 function entrarComoAdminNaEmpresa(empresaId) {
   currentEmpresaId = empresaId;
@@ -664,36 +901,45 @@ function fecharModalNovaEmpresa() { document.getElementById('modalNovaEmpresa').
 
 document.getElementById('form-nova-empresa').addEventListener('submit', e => {
   e.preventDefault();
-  const nome = document.getElementById('add-empresa-nome').value;
+  const nome = document.getElementById('add-empresa-nome').value.trim();
   const nomeUsuario = document.getElementById('add-empresa-contato').value.trim();
-  const uEmail = document.getElementById('add-empresa-user-email').value;
+  const uEmail = document.getElementById('add-empresa-user-email').value.trim();
   const uSenha = document.getElementById('add-empresa-user-senha').value;
+  const btn = e.target.querySelector('button[type="submit"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'A criar…'; }
 
-  db.collection('empresas').add({
+  reservarProximoCodigoEmpresa()
+    .then(codigo => db.collection('empresas').add({
+      codigo,
       nome, nomeUsuario, emailAcesso: uEmail, ativa: true,
       criadaEm: firebase.firestore.FieldValue.serverTimestamp()
-    })
-    .then(docRef => {
-      return secondAuth.createUserWithEmailAndPassword(uEmail, uSenha)
+    }).then(docRef => ({ docRef, codigo })))
+    .then(({ docRef, codigo }) =>
+      secondAuth.createUserWithEmailAndPassword(uEmail, uSenha)
         .then(res => {
           const uid = res.user.uid;
           return db.collection('usuarios').doc(uid).set({
-            email: uEmail, nome: nomeUsuario, role: 'admin', empresaId: docRef.id, empresaNome: nome
+            email: uEmail, nome: nomeUsuario, role: 'admin',
+            empresaId: docRef.id, empresaNome: nome, empresaCodigo: codigo
           }).then(() => docRef.update({ adminUid: uid }));
-        });
-    })
-    .then(() => {
+        })
+        .then(() => codigo)
+    )
+    .then(codigo => {
       secondAuth.signOut();
       fecharModalNovaEmpresa();
+      alert('Projeto criado com código ' + formatarCodigoEmpresa(codigo) + '.');
     })
-    .catch(err => alert("Erro ao criar infraestrutura de cliente: " + err.message));
+    .catch(err => alert('Erro ao criar projeto: ' + err.message))
+    .finally(() => {
+      if (btn) { btn.disabled = false; btn.textContent = 'Cadastrar Empresa'; }
+    });
 });
 
 // Janela Auxiliar: Gerenciamento Multi-Usuário do Inquilino (Tenant)
 let activeUserManageEmpresaId = null;
 let unsubUsuariosEmpresa = null;
 let usuarioEditId = null;
-let usuarioEditCol = 'usuarios';
 let usuarioEditEmail = '';
 
 function emailLoginEmpresa(emp) {
@@ -706,9 +952,12 @@ function emailLoginEmpresa(emp) {
 async function getUsuarioDoc(uid) {
   let doc = await db.collection('usuarios').doc(uid).get();
   if (doc.exists) return { doc, col: 'usuarios' };
-  doc = await db.collection('users').doc(uid).get();
-  if (doc.exists) return { doc, col: 'users' };
-  return null;
+  const legado = await db.collection('users').doc(uid).get();
+  if (!legado.exists) return null;
+  await db.collection('usuarios').doc(uid).set(legado.data(), { merge: true });
+  await legado.ref.delete();
+  doc = await db.collection('usuarios').doc(uid).get();
+  return { doc, col: 'usuarios' };
 }
 
 async function resolverUsuariosEmpresa(empresaId) {
@@ -722,10 +971,12 @@ async function resolverUsuariosEmpresa(empresaId) {
   snap.docs.forEach(add);
 
   if (emp.adminUid) {
-    const u = await db.collection('usuarios').doc(emp.adminUid).get();
-    add(u);
-    if (u.exists && u.data().empresaId !== empresaId) {
-      await u.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
+    const found = await getUsuarioDoc(emp.adminUid);
+    if (found) {
+      add(found.doc);
+      if (found.doc.data().empresaId !== empresaId) {
+        await found.doc.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
+      }
     }
   }
 
@@ -738,12 +989,19 @@ async function resolverUsuariosEmpresa(empresaId) {
     }
     const q2 = await db.collection('users').where('email', '==', email).get();
     for (const d of q2.docs) {
-      add(d);
-      if (!d.data().empresaId) await d.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
+      const data = d.data();
+      await db.collection('usuarios').doc(d.id).set(data, { merge: true });
+      await d.ref.delete();
+      const nd = await db.collection('usuarios').doc(d.id).get();
+      add(nd);
+      if (!nd.data().empresaId) await nd.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
     }
   }
 
-  return Array.from(map.values());
+  return Array.from(map.values()).filter(d => {
+    const r = d.data().role;
+    return r !== 'superadmin' && r !== 'teep_admin';
+  });
 }
 
 function renderListaUsuariosEmpresa(docs) {
@@ -757,11 +1015,11 @@ function renderListaUsuariosEmpresa(docs) {
   docs.forEach(d => {
     const u = d.data();
     const uid = escapeHtml(d.id);
-    const col = d.ref.parent.id;
-    const roleLabel = u.role === 'admin' ? 'Administrador' : (u.role === 'superadmin' ? 'Superadmin' : 'Utilizador');
-    const acoes = u.role === 'superadmin' ? '<span class="text-gray-400 text-[10px]">—</span>' : `
-            <button type="button" onclick="editarUsuario('${uid}', '${col}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
-            <button type="button" onclick="removerAcessoUsuario('${uid}', '${col}')" class="text-red-500 hover:text-red-700 font-bold">×</button>`;
+    const roleLabel = labelRoleUsuario(u.role);
+    const isTeep = u.role === 'superadmin' || u.role === 'teep_admin';
+    const acoes = isTeep ? '<span class="text-gray-400 text-[10px]">—</span>' : `
+            <button type="button" onclick="editarUsuario('${uid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
+            <button type="button" onclick="removerAcessoUsuario('${uid}')" class="text-red-500 hover:text-red-700 font-bold">×</button>`;
     tbody.innerHTML += `
         <tr>
           <td class="p-2 border-b font-medium text-gray-700">${escapeHtml(u.email || '')}</td>
@@ -786,10 +1044,13 @@ async function atualizarListaUsuariosEmpresa() {
   }
 }
 
-function gerenciarUsuarios(empresaId, nomeEmpresa) {
+function gerenciarUsuarios(empresaId, nomeEmpresa, codigo) {
   activeUserManageEmpresaId = empresaId;
   voltarListaUsuarios();
-  document.getElementById('modal-user-titulo').innerText = 'Gestão de Acessos — ' + nomeEmpresa;
+  const cod = codigo != null && codigo !== 'null' ? formatarCodigoEmpresa(codigo) : '';
+  document.getElementById('modal-user-titulo').innerText = cod
+    ? 'Projeto ' + cod + ' — ' + nomeEmpresa
+    : 'Gestão de Acessos — ' + nomeEmpresa;
   document.getElementById('modalUsuarios').classList.add('active');
 
   if (unsubUsuariosEmpresa) unsubUsuariosEmpresa();
@@ -820,8 +1081,13 @@ document.getElementById('form-novo-usuario').addEventListener('submit', e => {
   secondAuth.createUserWithEmailAndPassword(email, senha)
     .then(res => {
       const uid = res.user.uid;
-      return db.collection('usuarios').doc(uid).set({
-        email, nome, role, empresaId: activeUserManageEmpresaId
+      return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
+        const empCodigo = empSnap.exists ? empSnap.data().codigo : null;
+        return db.collection('usuarios').doc(uid).set({
+          email, nome, role, empresaId: activeUserManageEmpresaId,
+          empresaNome: empSnap.exists ? empSnap.data().nome : '',
+          empresaCodigo: empCodigo
+        });
       }).then(() => {
         return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
           const emp = empSnap.data() || {};
@@ -852,37 +1118,29 @@ function mostrarPainelEditarUsuario(show) {
 
 function voltarListaUsuarios() {
   usuarioEditId = null;
-  usuarioEditCol = 'usuarios';
   usuarioEditEmail = '';
   document.getElementById('form-editar-usuario')?.reset();
   mostrarPainelEditarUsuario(false);
 }
 window.voltarListaUsuarios = voltarListaUsuarios;
 
-async function editarUsuario(uid, col) {
+async function editarUsuario(uid) {
   if (!uid) return;
   try {
-    let found = null;
-    if (col === 'users') {
-      const d = await db.collection('users').doc(uid).get();
-      if (d.exists) found = { doc: d, col: 'users' };
-    }
-    if (!found) {
-      const d = await db.collection('usuarios').doc(uid).get();
-      if (d.exists) found = { doc: d, col: 'usuarios' };
-    }
-    if (!found) {
-      found = await getUsuarioDoc(uid);
-    }
+    const found = await getUsuarioDoc(uid);
     if (!found) { alert('Utilizador não encontrado.'); return; }
     const u = found.doc.data();
-    if (u.role === 'superadmin') { alert('Contas de superadministrador não podem ser editadas aqui.'); return; }
+    if (u.role === 'superadmin' || u.role === 'teep_admin') {
+      alert('Contas Teep são geridas na secção Equipa Teep.');
+      return;
+    }
     usuarioEditId = uid;
-    usuarioEditCol = found.col;
     usuarioEditEmail = u.email || '';
     document.getElementById('edit-user-email').value = usuarioEditEmail;
     document.getElementById('edit-user-nome').value = u.nome || '';
     document.getElementById('edit-user-role').value = u.role === 'admin' ? 'admin' : 'user';
+    const senhaEl = document.getElementById('edit-user-senha');
+    if (senhaEl) senhaEl.value = '';
     mostrarPainelEditarUsuario(true);
   } catch (err) {
     alert('Erro ao carregar: ' + err.message);
@@ -902,37 +1160,42 @@ document.getElementById('form-editar-usuario').addEventListener('submit', e => {
   if (!usuarioEditId) return;
   const nome = document.getElementById('edit-user-nome').value.trim();
   const role = document.getElementById('edit-user-role').value;
+  const novaSenha = document.getElementById('edit-user-senha')?.value || '';
   const btn = document.getElementById('btn-salvar-edit-user');
   if (btn) { btn.disabled = true; btn.textContent = 'A guardar…'; }
 
-  const ref = db.collection(usuarioEditCol).doc(usuarioEditId);
-  ref.update({ nome, role, empresaId: activeUserManageEmpresaId })
+  migrarPerfilParaUsuarios(usuarioEditId)
+    .then(() => db.collection('usuarios').doc(usuarioEditId).update({
+      nome, role, empresaId: activeUserManageEmpresaId
+    }))
     .then(() => {
-      if (activeUserManageEmpresaId && usuarioEditCol === 'usuarios') {
-        return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
-          if (!empSnap.exists) return;
-          const emp = empSnap.data();
-          const patch = {};
-          if (emp.adminUid === usuarioEditId || emp.emailAcesso === usuarioEditEmail) {
-            if (nome) patch.nomeUsuario = nome;
-          }
-          if (Object.keys(patch).length) return empSnap.ref.update(patch);
-        });
-      }
+      if (novaSenha.length >= 6) return definirSenhaUtilizador(usuarioEditId, novaSenha);
+    })
+    .then(() => {
+      if (!activeUserManageEmpresaId) return;
+      return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
+        if (!empSnap.exists) return;
+        const emp = empSnap.data();
+        const patch = {};
+        if (emp.adminUid === usuarioEditId || emp.emailAcesso === usuarioEditEmail) {
+          if (nome) patch.nomeUsuario = nome;
+        }
+        if (Object.keys(patch).length) return empSnap.ref.update(patch);
+      });
     })
     .then(() => {
       alert('Utilizador atualizado.');
       voltarListaUsuarios();
       atualizarListaUsuariosEmpresa();
     })
-    .catch(err => alert('Erro ao guardar: ' + err.message + '\n\nConfirme que publicou firestore.rules no Firebase (superadmin).'))
+    .catch(err => alert('Erro ao guardar: ' + err.message + '\n\nPublique firestore.rules e, para senha direta, a Cloud Function definirSenhaUsuario.'))
     .finally(() => { if (btn) { btn.disabled = false; btn.textContent = 'Guardar alterações'; } });
 });
 
-function removerAcessoUsuario(uid, col) {
+function removerAcessoUsuario(uid) {
   if (!confirm('Remover este acesso? O perfil será apagado (o login no Firebase Authentication mantém-se até remover manualmente no Console).')) return;
-  const c = col || 'usuarios';
-  db.collection(c).doc(uid).delete()
+  migrarPerfilParaUsuarios(uid)
+    .then(() => db.collection('usuarios').doc(uid).delete())
     .then(() => atualizarListaUsuariosEmpresa())
     .catch(err => alert(err.message));
 }
@@ -945,8 +1208,14 @@ function iniciarListenersProjeto() {
   limparListenersProjeto();
   
   // Título Dinâmico do Projeto
-  db.collection('empresas').doc(currentEmpresaId).get().then(d => {
-    if(d.exists) document.getElementById('nome-empresa-titulo').innerText = `Plano de Implantação: ${d.data().nome}`;
+  db.collection('empresas').doc(currentEmpresaId).get().then(empDoc => {
+    if (empDoc.exists) {
+      const emp = empDoc.data();
+      const cod = formatarCodigoEmpresa(emp.codigo);
+      document.getElementById('nome-empresa-titulo').innerText = cod !== '—'
+        ? `Plano [${cod}]: ${emp.nome}`
+        : `Plano de Implantação: ${emp.nome}`;
+    }
   });
 
   // Listener 1: Equipa Técnica Alocada
@@ -963,7 +1232,7 @@ function iniciarListenersProjeto() {
       if (p.empresa === 'Teep') cBadge = "bg-green-100 text-green-700 border border-green-200";
       else if (p.empresa === 'Cliente') cBadge = "bg-orange-100 text-orange-700";
 
-      const btnDel = (userRole === 'superadmin' || (userRole === 'admin' && p.empresa !== 'Teep')) 
+      const btnDel = (isTeepStaff() || (userRole === 'admin' && p.empresa !== 'Teep')) 
         ? `<button onclick="excluirProfissional('${escapeHtml(p.id)}')" class="text-gray-300 hover:text-red-500 font-bold transition">×</button>` : '';
 
       list.innerHTML += `

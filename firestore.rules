@@ -22,37 +22,62 @@ service cloud.firestore {
       return isSignedIn() && hasProfile() && userData().role == 'superadmin';
     }
 
+    function isTeepStaff() {
+      return isSignedIn() && hasProfile()
+        && (userData().role == 'superadmin' || userData().role == 'teep_admin');
+    }
+
     function userEmpresaId() {
       return userData().empresaId;
     }
 
     function canReadEmpresa(empresaId) {
       return isSignedIn() && hasProfile()
-        && (isSuperAdmin() || userEmpresaId() == empresaId);
+        && (isTeepStaff() || userEmpresaId() == empresaId);
     }
 
     function canEditEmpresa(empresaId) {
       return isSignedIn() && hasProfile()
-        && (isSuperAdmin() || (userData().role == 'admin' && userEmpresaId() == empresaId));
+        && (isTeepStaff() || (userData().role == 'admin' && userEmpresaId() == empresaId));
     }
 
-    // Perfil: coleção principal "usuarios" (+ legado "users")
+    function targetUsuarioRole(userId) {
+      return exists(/databases/$(database)/documents/usuarios/$(userId))
+        ? get(/databases/$(database)/documents/usuarios/$(userId)).data.role
+        : (exists(/databases/$(database)/documents/users/$(userId))
+          ? get(/databases/$(database)/documents/users/$(userId)).data.role
+          : '');
+    }
+
+    function canManageUsuario(userId) {
+      return isTeepStaff()
+        && (isSuperAdmin() || targetUsuarioRole(userId) != 'superadmin');
+    }
+
+    // Coleção única de perfis (legado "users" só leitura/remoção durante migração)
     match /usuarios/{userId} {
       allow read: if isSignedIn() && hasProfile()
-        && (request.auth.uid == userId || isSuperAdmin());
-      allow create, update, delete: if isSuperAdmin();
+        && (request.auth.uid == userId || isTeepStaff());
+      allow create: if isTeepStaff()
+        && (request.resource.data.role != 'superadmin' || isSuperAdmin());
+      allow update, delete: if canManageUsuario(userId);
     }
 
     match /users/{userId} {
       allow read: if isSignedIn() && hasProfile()
-        && (request.auth.uid == userId || isSuperAdmin());
-      allow create, update, delete: if isSuperAdmin();
+        && (request.auth.uid == userId || isTeepStaff());
+      allow delete: if isTeepStaff();
+      allow create, update: if isTeepStaff();
+    }
+
+    match /_config/{docId} {
+      allow read, write: if isTeepStaff();
     }
 
     match /empresas/{empresaId} {
       allow read: if canReadEmpresa(empresaId);
-      allow create, delete: if isSuperAdmin();
-      allow update: if isSuperAdmin() || canEditEmpresa(empresaId);
+      allow create, delete: if isTeepStaff();
+      allow update: if isTeepStaff() || canEditEmpresa(empresaId);
 
       match /profissionais/{docId} {
         allow read: if canReadEmpresa(empresaId);
@@ -70,9 +95,8 @@ service cloud.firestore {
       }
     }
 
-    // Estatística do painel: collectionGroup("tarefas")
     match /{path=**}/tarefas/{docId} {
-      allow read: if isSuperAdmin();
+      allow read: if isTeepStaff();
     }
   }
 }

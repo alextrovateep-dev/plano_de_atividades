@@ -337,7 +337,11 @@
       </div>
       <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Empresa Responsável</label>
-        <select id="tar-empresa" class="w-full p-2 border rounded-lg text-sm bg-white"><option value="Teep">Teep</option><option value="Cliente">Cliente</option></select>
+        <select id="tar-empresa" class="w-full p-2 border rounded-lg text-sm bg-white">
+          <option value="Teep">Teep</option>
+          <option value="Cliente">Cliente</option>
+          <option value="Ambos">Ambos</option>
+        </select>
       </div>
       <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Profissional Técnico Encarregado</label>
@@ -852,7 +856,7 @@ function renderTarefas(tarefas) {
         <td class="p-2 border-r text-center text-gray-400 font-mono text-[11px]">${i+1}</td>
         <td class="p-2 border-r font-medium text-gray-800">${escapeHtml(t.nome)}</td>
         <td class="p-2 border-r text-gray-600 text-[11px]">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
-        <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${t.empresa==='Teep'?'bg-gray-200 text-gray-800':'bg-orange-100 text-orange-800'}">${escapeHtml(t.empresa)}</span></td>
+        <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${badgeEmpresaResponsavel(t.empresa)}">${escapeHtml(t.empresa)}</span></td>
         <td class="p-2 border-r text-gray-600 text-sm">${escapeHtml(t.profNome)}</td>
         <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.inicio)}</td>
         <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.fim)}</td>
@@ -874,6 +878,12 @@ function alterarStatus(id, nv) {
 }
 
 // Atualização Dinâmica do Formulário de Vinculação de Atividades
+function badgeEmpresaResponsavel(empresa) {
+  if (empresa === 'Teep') return 'bg-gray-200 text-gray-800';
+  if (empresa === 'Ambos') return 'bg-emerald-100 text-emerald-800';
+  return 'bg-orange-100 text-orange-800';
+}
+
 function formatarUnidadeSetorTarefa(t) {
   if (t.unidadeNome && t.setor && t.setor !== t.unidadeNome) return `${t.unidadeNome} · ${t.setor}`;
   return t.unidadeNome || t.setor || '—';

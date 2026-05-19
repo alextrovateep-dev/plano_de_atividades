@@ -489,7 +489,7 @@ const secondAuth = secondApp.auth();
 
 let cloudFunctions = null;
 try {
-  cloudFunctions = firebase.functions();
+  cloudFunctions = firebase.app().functions('us-central1');
 } catch (e) {
   console.warn('Firebase Functions não disponível:', e);
 }

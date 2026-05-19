@@ -150,10 +150,10 @@
     <section class="bg-white p-5 rounded-xl border shadow-sm space-y-6">
       <div class="flex justify-between items-center border-b pb-3">
         <div>
-          <h2 class="text-lg font-bold text-gray-800">2. Escopo e Dimensionamento de Postos de Trabalho</h2>
-          <p class="text-xs text-gray-400">Cálculo de horas técnicas com base nas unidades operacionais</p>
+          <h2 class="text-lg font-bold text-gray-800">2. Escopo e Dimensionamento da Implantação</h2>
+          <p class="text-xs text-gray-400">Orçamento de esforço por setor e tarefa (horas totais). O cronograma abaixo define <strong>quando</strong> cada atividade ocorre.</p>
         </div>
-        <button id="btn-add-escopo" onclick="abrirModalEscopo()" class="hidden px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-700 transition">+ Configurar Unidade</button>
+        <button id="btn-add-escopo" onclick="abrirModalEscopo()" class="hidden px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-700 transition">+ Item de Escopo</button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -162,8 +162,8 @@
             <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b">
               <tr>
                 <th class="p-2 border-r">Fase</th>
-                <th class="p-2 border-r">Unidade Operacional</th>
-                <th class="p-2 border-r">Máquinas</th>
+                <th class="p-2 border-r">Unid. Operacional / Setor</th>
+                <th class="p-2 border-r">Tarefa</th>
                 <th class="p-2 border-r">Horas</th>
                 <th class="p-2 border-r">Acumulado</th>
                 <th id="th-acao-escopo" class="p-2 text-center w-24 hidden">Ação</th>
@@ -176,12 +176,12 @@
           <div class="space-y-2">
             <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Resumo Estratégico</h4>
             <div class="grid grid-cols-2 gap-4 pt-2">
-              <div class="bg-white p-3 rounded-lg border"><span class="text-[11px] text-gray-400 font-bold block">TOTAL MÁQUINAS</span><span id="totalMaquinas" class="text-2xl font-black text-gray-800">0</span></div>
+              <div class="bg-white p-3 rounded-lg border"><span class="text-[11px] text-gray-400 font-bold block">COLETORES (TERMINAIS)</span><span id="totalMaquinas" class="text-2xl font-black text-gray-800">0</span></div>
               <div class="bg-white p-3 rounded-lg border border-green-100 bg-green-50/10"><span class="text-[11px] text-green-600 font-bold block">CARGA HORÁRIA TOTAL</span><span id="totalHoras" class="text-2xl font-black text-green-700">0h</span></div>
             </div>
           </div>
           <div class="text-[11px] text-gray-400 leading-relaxed pt-4 border-t mt-4">
-            * Carga horária calculada via matriz de dimensionamento de engenharia da Teep baseada no volume de coletores de dados ativos.
+            * Terminais: horas pela matriz Teep (coletores). Outros setores (TI, elétrica, etc.): horas estimadas por tarefa. O cronograma regista o período de execução.
           </div>
         </div>
       </div>
@@ -192,7 +192,7 @@
       <div class="flex justify-between items-center border-b pb-3">
         <div>
           <h2 class="text-lg font-bold text-gray-800">3. Cronograma Executivo de Atividades</h2>
-          <p class="text-xs text-gray-400">Controlo de milestones, prazos e estados das tarefas em tempo real</p>
+          <p class="text-xs text-gray-400">Quando cada atividade ocorre (início e fim). O esforço em horas está na secção 2.</p>
         </div>
         <button id="btn-add-tarefa" onclick="abrirModalTarefa()" class="hidden px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-green-700 transition">+ Nova Atividade</button>
       </div>
@@ -249,7 +249,7 @@
     <div class="overflow-y-auto border rounded-lg flex-1">
       <table class="w-full text-left text-xs">
         <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider border-b">
-          <tr><th class="p-2">E-mail</th><th class="p-2">Nível</th><th class="p-2 text-center">Ação</th></tr>
+          <tr><th class="p-2">E-mail</th><th class="p-2">Nome</th><th class="p-2">Nível</th><th class="p-2 text-center">Ação</th></tr>
         </thead>
         <tbody id="lista-usuarios-empresa" class="divide-y"></tbody>
       </table>
@@ -260,6 +260,7 @@
         <div><label class="block text-[10px] font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="new-user-email" required class="w-full p-2 border rounded-lg text-xs bg-white"></div>
         <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Senha</label><input type="password" id="new-user-senha" required minlength="6" class="w-full p-2 border rounded-lg text-xs bg-white"></div>
       </div>
+      <div><label class="block text-[10px] font-bold text-gray-500 mb-1">Nome do utilizador</label><input type="text" id="new-user-nome" class="w-full p-2 border rounded-lg text-xs bg-white" placeholder="Ex: João Silva"></div>
       <div>
         <label class="block text-[10px] font-bold text-gray-500 mb-1">Nível de Permissão</label>
         <select id="new-user-role" class="w-full p-2 border rounded-lg text-xs bg-white font-medium">
@@ -270,6 +271,35 @@
       <button type="submit" class="w-full py-2 bg-gray-800 text-white font-bold text-xs rounded-lg hover:bg-gray-700">Criar Utilizador</button>
     </form>
     <div class="flex justify-end border-t pt-2"><button type="button" onclick="fecharModalUsuarios()" class="px-4 py-1.5 bg-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-300">Fechar Janela</button></div>
+  </div>
+</div>
+
+
+<div id="modalEditarUsuario" class="modal-overlay">
+  <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
+    <h3 class="text-lg font-bold text-gray-800">Editar Utilizador</h3>
+    <form id="form-editar-usuario" class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 mb-1">E-mail de acesso</label>
+        <input type="email" id="edit-user-email" readonly class="w-full p-2 border rounded-lg text-xs bg-gray-100 text-gray-600 cursor-not-allowed">
+        <p class="text-[10px] text-gray-400 mt-1">O e-mail de login não pode ser alterado aqui.</p>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 mb-1">Nome do utilizador</label>
+        <input type="text" id="edit-user-nome" class="w-full p-2 border rounded-lg text-xs bg-white" placeholder="Ex: João Silva">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 mb-1">Nível de permissão</label>
+        <select id="edit-user-role" class="w-full p-2 border rounded-lg text-xs bg-white font-medium">
+          <option value="user">Utilizador comum (apenas leitura)</option>
+          <option value="admin">Administrador da empresa (edição local)</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="fecharModalEditarUsuario()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
+        <button type="submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Guardar alterações</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -297,14 +327,30 @@
 
 <div id="modalEscopo" class="modal-overlay">
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
-    <h3 id="modal-escopo-titulo" class="text-lg font-bold text-gray-800">Adicionar Unidade Operacional</h3>
+    <h3 id="modal-escopo-titulo" class="text-lg font-bold text-gray-800">Adicionar item ao escopo</h3>
     <form id="form-escopo" class="space-y-3">
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Fase / Ordem Sequencial</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome da Unidade Operacional</label><input type="text" id="escopo-unidade" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Linha de Montagem 02"></div>
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Quantidade de Máquinas / Coletores</label><input type="number" id="escopo-maquinas" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 12"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Fase / Ordem sequencial</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Unidade operacional / Setor</label><input type="text" id="escopo-setor" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Produção, TI, Elétrica"></div>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Tipo de dimensionamento</label>
+        <select id="escopo-tipo" class="w-full p-2 border rounded-lg text-sm bg-white" onchange="toggleCamposEscopoTipo()">
+          <option value="terminal">Terminal / Coletores (matriz Teep)</option>
+          <option value="outro">Outro setor (horas estimadas)</option>
+        </select>
+      </div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Tarefa / Atividade</label><input type="text" id="escopo-tarefa" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Instalação de servidores, cablagem elétrica"></div>
+      <div id="escopo-terminal-wrap">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Quantidade de máquinas / coletores</label>
+        <input type="number" id="escopo-maquinas" min="1" class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 12" oninput="atualizarPreviewHorasEscopo()">
+        <p id="escopo-horas-preview" class="text-[10px] text-[#5C8374] font-semibold mt-1">Horas projetadas: —</p>
+      </div>
+      <div id="escopo-outro-wrap" class="hidden">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Total de horas (esforço)</label>
+        <input type="number" id="escopo-horas" min="1" class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 40">
+      </div>
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="fecharModalEscopo()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
-        <button type="submit" id="btn-escopo-submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Salvar Unidade</button>
+        <button type="submit" id="btn-escopo-submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Guardar</button>
       </div>
     </form>
   </div>
@@ -345,6 +391,7 @@
         </div>
         <div id="lista-profissionais-tarefa" class="min-h-[6rem] max-h-44 overflow-y-auto border rounded-lg p-2 space-y-0.5 bg-gray-50"></div>
       </div>
+      <p class="text-[10px] text-gray-400 -mt-1">Período em que a atividade ocorre (ex.: 5h de esforço executadas entre o dia 01 e o dia 10).</p>
       <div class="grid grid-cols-2 gap-2">
         <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Início</label><input type="date" id="tar-inicio" required class="w-full p-2 border rounded-lg text-sm"></div>
         <div><label class="block text-xs font-bold text-gray-500 mb-1">Previsão de Fim</label><input type="date" id="tar-fim" required class="w-full p-2 border rounded-lg text-sm"></div>
@@ -649,13 +696,16 @@ function gerenciarUsuarios(empresaId, nomeEmpresa) {
     snap.docs.forEach(d => {
       const u = d.data();
       const uid = escapeHtml(d.id);
+      const roleLabel = u.role === 'admin' ? 'Administrador' : 'Utilizador';
+      const acoes = u.role === 'superadmin' ? '<span class="text-gray-400 text-[10px]">—</span>' : `
+            <button type="button" onclick="editarUsuario('${uid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
+            <button type="button" onclick="removerAcessoUsuario('${uid}')" class="text-red-400 hover:text-red-600 font-bold">×</button>`;
       tbody.innerHTML += `
         <tr>
-          <td class="p-2 border-b font-medium text-gray-700">${escapeHtml(u.email)}</td>
-          <td class="p-2 border-b text-gray-400 capitalize">${escapeHtml(u.role)}</td>
-          <td class="p-2 border-b text-center">
-            <button onclick="removerAcessoUsuario('${uid}')" class="text-red-400 hover:text-red-600 font-bold">×</button>
-          </td>
+          <td class="p-2 border-b font-medium text-gray-700">${escapeHtml(u.email || '')}</td>
+          <td class="p-2 border-b text-gray-600">${escapeHtml(u.nome || '—')}</td>
+          <td class="p-2 border-b text-gray-500">${roleLabel}</td>
+          <td class="p-2 border-b text-center whitespace-nowrap">${acoes}</td>
         </tr>`;
     });
   });
@@ -672,17 +722,50 @@ document.getElementById('form-novo-usuario').addEventListener('submit', e => {
   if(!activeUserManageEmpresaId) return;
   const email = document.getElementById('new-user-email').value;
   const senha = document.getElementById('new-user-senha').value;
+  const nome = document.getElementById('new-user-nome').value.trim();
   const role = document.getElementById('new-user-role').value;
 
   secondAuth.createUserWithEmailAndPassword(email, senha)
     .then(res => {
-      return db.collection('usuarios').doc(res.user.uid).set({ email, role, empresaId: activeUserManageEmpresaId });
+      return db.collection('usuarios').doc(res.user.uid).set({ email, nome, role, empresaId: activeUserManageEmpresaId });
     })
     .then(() => {
       secondAuth.signOut();
       document.getElementById('form-novo-usuario').reset();
     })
     .catch(err => alert("Falha ao registrar credenciais: " + err.message));
+});
+
+
+let usuarioEditId = null;
+
+function editarUsuario(uid) {
+  db.collection('usuarios').doc(uid).get().then(doc => {
+    if (!doc.exists) { alert('Utilizador não encontrado.'); return; }
+    const u = doc.data();
+    if (u.role === 'superadmin') { alert('Contas de superadministrador não podem ser editadas aqui.'); return; }
+    usuarioEditId = uid;
+    document.getElementById('edit-user-email').value = u.email || '';
+    document.getElementById('edit-user-nome').value = u.nome || '';
+    document.getElementById('edit-user-role').value = u.role === 'admin' ? 'admin' : 'user';
+    document.getElementById('modalEditarUsuario').classList.add('active');
+  }).catch(err => alert(err.message));
+}
+
+function fecharModalEditarUsuario() {
+  usuarioEditId = null;
+  document.getElementById('modalEditarUsuario').classList.remove('active');
+  document.getElementById('form-editar-usuario').reset();
+}
+
+document.getElementById('form-editar-usuario').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!usuarioEditId) return;
+  const nome = document.getElementById('edit-user-nome').value.trim();
+  const role = document.getElementById('edit-user-role').value;
+  db.collection('usuarios').doc(usuarioEditId).update({ nome, role })
+    .then(() => fecharModalEditarUsuario())
+    .catch(err => alert('Erro ao guardar: ' + err.message));
 });
 
 function removerAcessoUsuario(uid) {
@@ -745,6 +828,47 @@ function iniciarListenersProjeto() {
 }
 
 // LÓGICA DINÂMICA DE ESCOPO
+
+function labelSetorEscopo(d) { return (d.setor || d.unidade || '').trim(); }
+function labelTarefaEscopo(d) {
+  if (d.tarefa) return d.tarefa;
+  if (d.tipo === 'terminal' || Number(d.maquinas) > 0) {
+    const m = Number(d.maquinas) || 0;
+    return m ? 'Instalação de terminais / coletores (' + m + ' máq.)' : 'Instalação de terminais / coletores';
+  }
+  return '—';
+}
+function tipoEscopo(d) {
+  if (d.tipo === 'outro') return 'outro';
+  if (d.tipo === 'terminal') return 'terminal';
+  return Number(d.maquinas) > 0 ? 'terminal' : 'outro';
+}
+function horasEscopo(d) {
+  if (d.horas != null && d.horas !== '') return Number(d.horas) || 0;
+  if (tipoEscopo(d) === 'terminal') return getHoras(Number(d.maquinas) || 0);
+  return 0;
+}
+function toggleCamposEscopoTipo() {
+  const tipo = document.getElementById('escopo-tipo').value;
+  const term = document.getElementById('escopo-terminal-wrap');
+  const outro = document.getElementById('escopo-outro-wrap');
+  const maq = document.getElementById('escopo-maquinas');
+  const horas = document.getElementById('escopo-horas');
+  if (!term || !outro) return;
+  const isTerminal = tipo === 'terminal';
+  term.classList.toggle('hidden', !isTerminal);
+  outro.classList.toggle('hidden', isTerminal);
+  if (maq) maq.required = isTerminal;
+  if (horas) horas.required = !isTerminal;
+  atualizarPreviewHorasEscopo();
+}
+function atualizarPreviewHorasEscopo() {
+  const el = document.getElementById('escopo-horas-preview');
+  const maq = document.getElementById('escopo-maquinas');
+  if (!el || !maq) return;
+  const q = Number(maq.value);
+  el.textContent = q > 0 ? 'Horas projetadas: ' + getHoras(q) + 'h (matriz Teep)' : 'Horas projetadas: —';
+}
 function getHoras(q){ const f = tabelaTeep.find(x => q >= x.min && q <= x.max); return f ? f.horas : 0; }
 
 function renderEscopoDinamicamente(dados) {
@@ -764,19 +888,21 @@ function renderEscopoDinamicamente(dados) {
   }
 
   if (dados.length === 0) {
-    tabela.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">Nenhuma unidade cadastrada no escopo do projeto.</td></tr>`;
+    tabela.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">Nenhum item cadastrado no escopo da implantação.</td></tr>`;
     document.getElementById('totalMaquinas').innerText = 0;
     document.getElementById('totalHoras').innerText = '0h';
     return;
   }
 
-  const hp = dados.map(d => getHoras(Number(d.maquinas)));
-  th = hp.reduce((a,b) => a+b, 0);
-  tm = dados.reduce((a,b) => a + Number(b.maquinas), 0);
-  
-  dados.forEach((d, i) => {
-    const h = hp[i]; ac += h;
+  th = dados.reduce((s, d) => s + horasEscopo(d), 0);
+  tm = dados.reduce((s, d) => s + (tipoEscopo(d) === 'terminal' ? (Number(d.maquinas) || 0) : 0), 0);
+
+  dados.forEach(d => {
+    const h = horasEscopo(d);
+    ac += h;
     const eid = escapeHtml(d.id);
+    const setor = escapeHtml(labelSetorEscopo(d));
+    const tarefa = escapeHtml(labelTarefaEscopo(d));
     const tdAcaoEscopo = podeEditar ? `
       <td class="p-2 text-center whitespace-nowrap">
         <button type="button" onclick="editarUnidadeEscopo('${eid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
@@ -786,9 +912,9 @@ function renderEscopoDinamicamente(dados) {
     tabela.innerHTML += `
       <tr class="hover:bg-gray-50">
         <td class="p-2 border-r text-center">${d.ordem}</td>
-        <td class="p-2 border-r">${escapeHtml(d.unidade)}</td>
-        <td class="p-2 border-r text-center">${escapeHtml(d.maquinas)}</td>
-        <td class="p-2 border-r text-center">${h}h</td>
+        <td class="p-2 border-r">${setor}</td>
+        <td class="p-2 border-r text-gray-600">${tarefa}</td>
+        <td class="p-2 border-r text-center font-semibold">${h}h</td>
         <td class="p-2 border-r font-bold text-center bg-gray-50/50">${ac}h</td>
         ${tdAcaoEscopo}
       </tr>`;
@@ -988,7 +1114,7 @@ function atualizarSelectUnidadesTarefa() {
   const atual = sel.value;
   sel.innerHTML = '<option value="">Selecione a unidade do escopo</option>';
   cacheEscopo.forEach(u => {
-    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Fase ${escapeHtml(u.ordem)}: ${escapeHtml(u.unidade)}</option>`;
+    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Fase ${escapeHtml(u.ordem)}: ${escapeHtml(labelSetorEscopo(u))} — ${escapeHtml(labelTarefaEscopo(u))}</option>`;
   });
   sel.innerHTML += '<option value="__outro__">Outro setor (especificar)</option>';
   if ([...sel.options].some(o => o.value === atual)) sel.value = atual;
@@ -1030,15 +1156,22 @@ function abrirModalEscopo(idEditar) {
     const u = cacheEscopo.find(x => x.id === escopoEditId);
     if (u) {
       document.getElementById('escopo-ordem').value = u.ordem;
-      document.getElementById('escopo-unidade').value = u.unidade;
-      document.getElementById('escopo-maquinas').value = u.maquinas;
+      const tipo = tipoEscopo(u);
+      document.getElementById('escopo-setor').value = labelSetorEscopo(u);
+      document.getElementById('escopo-tipo').value = tipo;
+      document.getElementById('escopo-tarefa').value = u.tarefa || (tipo === 'terminal' ? 'Instalação de terminais / coletores' : '');
+      document.getElementById('escopo-maquinas').value = u.maquinas || '';
+      document.getElementById('escopo-horas').value = tipo === 'outro' ? (u.horas || '') : '';
     }
-    titulo.innerText = 'Editar Unidade Operacional';
+    titulo.innerText = 'Editar item do escopo';
     btn.innerText = 'Guardar alterações';
   } else {
-    titulo.innerText = 'Adicionar Unidade Operacional';
-    btn.innerText = 'Salvar Unidade';
+    titulo.innerText = 'Adicionar item ao escopo';
+    btn.innerText = 'Guardar';
+    document.getElementById('escopo-tipo').value = 'terminal';
+    document.getElementById('escopo-tarefa').value = 'Instalação de terminais / coletores';
   }
+  toggleCamposEscopoTipo();
   document.getElementById('modalEscopo').classList.add('active');
 }
 
@@ -1053,16 +1186,27 @@ function fecharModalEscopo() {
 document.getElementById('form-escopo').addEventListener('submit', e => {
   e.preventDefault();
   const ordem = Number(document.getElementById('escopo-ordem').value);
-  const unidade = document.getElementById('escopo-unidade').value.trim();
-  const maquinas = Number(document.getElementById('escopo-maquinas').value);
-  const payload = { ordem, unidade, maquinas };
+  const setor = document.getElementById('escopo-setor').value.trim();
+  const tarefa = document.getElementById('escopo-tarefa').value.trim();
+  const tipo = document.getElementById('escopo-tipo').value;
+  let maquinas = 0;
+  let horas = 0;
+  if (tipo === 'terminal') {
+    maquinas = Number(document.getElementById('escopo-maquinas').value);
+    if (!maquinas || maquinas < 1) { alert('Indique a quantidade de máquinas / coletores.'); return; }
+    horas = getHoras(maquinas);
+  } else {
+    horas = Number(document.getElementById('escopo-horas').value);
+    if (!horas || horas < 1) { alert('Indique o total de horas de esforço.'); return; }
+  }
+  const payload = { ordem, setor, unidade: setor, tarefa, tipo, maquinas, horas };
   const col = db.collection('empresas').doc(currentEmpresaId).collection('escopo');
   const prom = escopoEditId ? col.doc(escopoEditId).update(payload) : col.add(payload);
   prom.then(() => fecharModalEscopo());
 });
 
 function excluirUnidadeEscopo(id) {
-  if(confirm('Deseja remover esta unidade e recalcular a carga horária do projeto?')) {
+  if(confirm('Deseja remover este item do escopo?')) {
     db.collection('empresas').doc(currentEmpresaId).collection('escopo').doc(id).delete();
   }
 }
@@ -1152,8 +1296,9 @@ function obterUnidadeSetorFormTarefa() {
     unidadeEscopoId = sel;
     const u = cacheEscopo.find(x => x.id === sel);
     if (u) {
-      unidadeNome = u.unidade;
-      setor = u.unidade;
+      const s = labelSetorEscopo(u);
+      unidadeNome = s;
+      setor = s;
     }
   }
   return { unidadeEscopoId, unidadeNome, setor };
@@ -1205,3 +1350,4 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 </script>
 </body>
 </html>
+

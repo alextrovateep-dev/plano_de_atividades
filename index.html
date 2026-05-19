@@ -11,6 +11,7 @@
 <style>
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:1rem}
   .modal-overlay.active{display:flex}
+  .modal-overlay.modal-top{z-index:1100}
   .view{display:none}
   .view.active{display:flex;flex-direction:column;min-height:100vh;width:100%}
   #view-login.view.active{flex-direction:column;align-items:center;justify-content:center}
@@ -98,7 +99,7 @@
           <thead class="bg-gray-100 text-gray-600 uppercase text-[11px] tracking-wider font-bold border-b">
             <tr>
               <th class="p-3">Nome da Empresa</th>
-              <th class="p-3">Utilizador</th>
+              <th class="p-3">Login principal</th>
               <th class="p-3 text-center">Ações de Gestão</th>
               <th class="p-3 text-center">Estado</th>
               <th class="p-3 text-right">Acessar</th>
@@ -226,7 +227,7 @@
     <h3 class="text-lg font-bold text-gray-800">Registar Nova Empresa Cliente</h3>
     <form id="form-nova-empresa" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome da Organização</label><input type="text" id="add-empresa-nome" required class="w-full p-2 border rounded-lg text-sm"></div>
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome do usuário</label><input type="text" id="add-empresa-contato" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: João Silva"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome do contacto</label><input type="text" id="add-empresa-contato" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: João Silva"></div>
       <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
         <span class="text-xs font-bold text-gray-600 block">Criar Conta de Acesso Administrador</span>
         <div><label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">E-mail de Acesso do Cliente</label><input type="email" id="add-empresa-user-email" required class="w-full p-2 border rounded-lg text-sm bg-white"></div>
@@ -241,10 +242,11 @@
 </div>
 
 <div id="modalUsuarios" class="modal-overlay">
-  <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-xl space-y-4 flex flex-col max-h-[85vh]">
+  <div class="bg-white p-6 rounded-xl max-w-lg w-full shadow-xl space-y-4 flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+    <div id="painel-lista-usuarios-empresa" class="flex flex-col flex-1 min-h-0 space-y-4">
     <div>
       <h3 id="modal-user-titulo" class="text-lg font-bold text-gray-800">Utilizadores da Empresa</h3>
-      <p class="text-xs text-gray-400">Controlo de acessos dedicados a esta organização</p>
+      <p class="text-xs text-gray-400">Edite logins existentes ou adicione novos (e-mail + senha) para esta organização.</p>
     </div>
     <div class="overflow-y-auto border rounded-lg flex-1">
       <table class="w-full text-left text-xs">
@@ -271,37 +273,40 @@
       <button type="submit" class="w-full py-2 bg-gray-800 text-white font-bold text-xs rounded-lg hover:bg-gray-700">Criar Utilizador</button>
     </form>
     <div class="flex justify-end border-t pt-2"><button type="button" onclick="fecharModalUsuarios()" class="px-4 py-1.5 bg-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-300">Fechar Janela</button></div>
+    </div>
+    <div id="painel-editar-usuario-empresa" class="hidden flex flex-col flex-1 min-h-0 space-y-3">
+      <button type="button" onclick="voltarListaUsuarios()" class="text-left text-xs font-bold text-[#5C8374] hover:underline w-fit">← Voltar à lista</button>
+      <h4 class="text-sm font-bold text-gray-800">Editar utilizador</h4>
+      <form id="form-editar-usuario" class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 mb-1">E-mail de acesso (login)</label>
+          <input type="email" id="edit-user-email" readonly class="w-full p-2 border rounded-lg text-xs bg-gray-100 text-gray-600 cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 mb-1">Nome do utilizador</label>
+          <input type="text" id="edit-user-nome" class="w-full p-2 border rounded-lg text-xs bg-white" placeholder="Ex: João Silva">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 mb-1">Nível de permissão</label>
+          <select id="edit-user-role" class="w-full p-2 border rounded-lg text-xs bg-white font-medium">
+            <option value="user">Utilizador comum (apenas leitura)</option>
+            <option value="admin">Administrador da empresa (edição local)</option>
+          </select>
+        </div>
+        <div class="p-2 bg-amber-50 border border-amber-100 rounded-lg">
+          <p class="text-[10px] text-amber-800 mb-2">Para alterar a senha, envie um e-mail de redefinição (link seguro Firebase).</p>
+          <button type="button" id="btn-reset-senha-usuario" class="w-full py-1.5 bg-amber-100 text-amber-900 text-xs font-bold rounded-lg hover:bg-amber-200">Enviar e-mail de nova senha</button>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="voltarListaUsuarios()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
+          <button type="submit" id="btn-salvar-edit-user" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Guardar alterações</button>
+        </div>
+      </form>
+    </div>
+
   </div>
 </div>
 
-
-<div id="modalEditarUsuario" class="modal-overlay">
-  <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
-    <h3 class="text-lg font-bold text-gray-800">Editar Utilizador</h3>
-    <form id="form-editar-usuario" class="space-y-3">
-      <div>
-        <label class="block text-[10px] font-bold text-gray-500 mb-1">E-mail de acesso</label>
-        <input type="email" id="edit-user-email" readonly class="w-full p-2 border rounded-lg text-xs bg-gray-100 text-gray-600 cursor-not-allowed">
-        <p class="text-[10px] text-gray-400 mt-1">O e-mail de login não pode ser alterado aqui.</p>
-      </div>
-      <div>
-        <label class="block text-[10px] font-bold text-gray-500 mb-1">Nome do utilizador</label>
-        <input type="text" id="edit-user-nome" class="w-full p-2 border rounded-lg text-xs bg-white" placeholder="Ex: João Silva">
-      </div>
-      <div>
-        <label class="block text-[10px] font-bold text-gray-500 mb-1">Nível de permissão</label>
-        <select id="edit-user-role" class="w-full p-2 border rounded-lg text-xs bg-white font-medium">
-          <option value="user">Utilizador comum (apenas leitura)</option>
-          <option value="admin">Administrador da empresa (edição local)</option>
-        </select>
-      </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="fecharModalEditarUsuario()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
-        <button type="submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Guardar alterações</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <div id="modalProfissional" class="modal-overlay">
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
@@ -627,11 +632,11 @@ function iniciarPainelAdmin() {
       const emp = doc.data();
       const id = escapeHtml(doc.id);
       const nome = escapeHtml(emp.nome);
-      const contato = escapeHtml(emp.nomeUsuario || emp.contato);
+      const loginPrincipal = escapeHtml(emp.emailAcesso || (String(emp.nomeUsuario||'').includes('@') ? emp.nomeUsuario : '') || emp.nomeUsuario || emp.contato || '—');
       tbody.innerHTML += `
         <tr class="hover:bg-gray-50">
           <td class="p-3 font-bold text-gray-800">${nome}</td>
-          <td class="p-3 text-gray-600 text-sm">${contato}</td>
+          <td class="p-3 text-gray-600 text-sm">${loginPrincipal}</td>
           <td class="p-3 text-center space-x-1">
             <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200">Utilizadores</button>
             <button onclick="alternarEstadoEmpresa('${id}', ${!!emp.ativa})" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
@@ -664,13 +669,17 @@ document.getElementById('form-nova-empresa').addEventListener('submit', e => {
   const uEmail = document.getElementById('add-empresa-user-email').value;
   const uSenha = document.getElementById('add-empresa-user-senha').value;
 
-  db.collection('empresas').add({ nome, nomeUsuario, ativa: true, criadaEm: firebase.firestore.FieldValue.serverTimestamp() })
+  db.collection('empresas').add({
+      nome, nomeUsuario, emailAcesso: uEmail, ativa: true,
+      criadaEm: firebase.firestore.FieldValue.serverTimestamp()
+    })
     .then(docRef => {
       return secondAuth.createUserWithEmailAndPassword(uEmail, uSenha)
         .then(res => {
-          return db.collection('usuarios').doc(res.user.uid).set({
-            email: uEmail, role: 'admin', empresaId: docRef.id, empresaNome: nome
-          });
+          const uid = res.user.uid;
+          return db.collection('usuarios').doc(uid).set({
+            email: uEmail, nome: nomeUsuario, role: 'admin', empresaId: docRef.id, empresaNome: nome
+          }).then(() => docRef.update({ adminUid: uid }));
         });
     })
     .then(() => {
@@ -683,96 +692,251 @@ document.getElementById('form-nova-empresa').addEventListener('submit', e => {
 // Janela Auxiliar: Gerenciamento Multi-Usuário do Inquilino (Tenant)
 let activeUserManageEmpresaId = null;
 let unsubUsuariosEmpresa = null;
+let usuarioEditId = null;
+let usuarioEditCol = 'usuarios';
+let usuarioEditEmail = '';
 
-function gerenciarUsuarios(empresaId, nomeEmpresa) {
-  activeUserManageEmpresaId = empresaId;
-  document.getElementById('modal-user-titulo').innerText = `Gestão de Acessos - ${nomeEmpresa}`;
-  document.getElementById('modalUsuarios').classList.add('active');
-  
-  if(unsubUsuariosEmpresa) unsubUsuariosEmpresa();
-  unsubUsuariosEmpresa = db.collection('usuarios').where('empresaId', '==', empresaId).onSnapshot(snap => {
-    const tbody = document.getElementById('lista-usuarios-empresa');
-    tbody.innerHTML = '';
-    snap.docs.forEach(d => {
-      const u = d.data();
-      const uid = escapeHtml(d.id);
-      const roleLabel = u.role === 'admin' ? 'Administrador' : 'Utilizador';
-      const acoes = u.role === 'superadmin' ? '<span class="text-gray-400 text-[10px]">—</span>' : `
-            <button type="button" onclick="editarUsuario('${uid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
-            <button type="button" onclick="removerAcessoUsuario('${uid}')" class="text-red-400 hover:text-red-600 font-bold">×</button>`;
-      tbody.innerHTML += `
+function emailLoginEmpresa(emp) {
+  if (!emp) return '';
+  if (emp.emailAcesso) return emp.emailAcesso;
+  const n = String(emp.nomeUsuario || emp.contato || '').trim();
+  return n.includes('@') ? n : '';
+}
+
+async function getUsuarioDoc(uid) {
+  let doc = await db.collection('usuarios').doc(uid).get();
+  if (doc.exists) return { doc, col: 'usuarios' };
+  doc = await db.collection('users').doc(uid).get();
+  if (doc.exists) return { doc, col: 'users' };
+  return null;
+}
+
+async function resolverUsuariosEmpresa(empresaId) {
+  const map = new Map();
+  const add = (doc) => { if (doc && doc.exists) map.set(doc.id, doc); };
+
+  const empSnap = await db.collection('empresas').doc(empresaId).get();
+  const emp = empSnap.exists ? empSnap.data() : {};
+
+  const snap = await db.collection('usuarios').where('empresaId', '==', empresaId).get();
+  snap.docs.forEach(add);
+
+  if (emp.adminUid) {
+    const u = await db.collection('usuarios').doc(emp.adminUid).get();
+    add(u);
+    if (u.exists && u.data().empresaId !== empresaId) {
+      await u.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
+    }
+  }
+
+  const email = emailLoginEmpresa(emp);
+  if (email) {
+    const q1 = await db.collection('usuarios').where('email', '==', email).get();
+    for (const d of q1.docs) {
+      add(d);
+      if (!d.data().empresaId) await d.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
+    }
+    const q2 = await db.collection('users').where('email', '==', email).get();
+    for (const d of q2.docs) {
+      add(d);
+      if (!d.data().empresaId) await d.ref.update({ empresaId: empresaId, empresaNome: emp.nome || '' });
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+function renderListaUsuariosEmpresa(docs) {
+  const tbody = document.getElementById('lista-usuarios-empresa');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!docs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400 italic">Nenhum login vinculado. Use o formulário abaixo para criar o primeiro acesso (e-mail + senha).</td></tr>';
+    return;
+  }
+  docs.forEach(d => {
+    const u = d.data();
+    const uid = escapeHtml(d.id);
+    const col = d.ref.parent.id;
+    const roleLabel = u.role === 'admin' ? 'Administrador' : (u.role === 'superadmin' ? 'Superadmin' : 'Utilizador');
+    const acoes = u.role === 'superadmin' ? '<span class="text-gray-400 text-[10px]">—</span>' : `
+            <button type="button" onclick="editarUsuario('${uid}', '${col}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
+            <button type="button" onclick="removerAcessoUsuario('${uid}', '${col}')" class="text-red-500 hover:text-red-700 font-bold">×</button>`;
+    tbody.innerHTML += `
         <tr>
           <td class="p-2 border-b font-medium text-gray-700">${escapeHtml(u.email || '')}</td>
           <td class="p-2 border-b text-gray-600">${escapeHtml(u.nome || '—')}</td>
           <td class="p-2 border-b text-gray-500">${roleLabel}</td>
           <td class="p-2 border-b text-center whitespace-nowrap">${acoes}</td>
         </tr>`;
-    });
   });
 }
 
+async function atualizarListaUsuariosEmpresa() {
+  if (!activeUserManageEmpresaId) return;
+  const tbody = document.getElementById('lista-usuarios-empresa');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">A carregar…</td></tr>';
+  try {
+    const docs = await resolverUsuariosEmpresa(activeUserManageEmpresaId);
+    renderListaUsuariosEmpresa(docs);
+  } catch (err) {
+    console.error(err);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 text-xs">Erro: ' + escapeHtml(err.message) + '</td></tr>';
+    alert('Erro ao carregar utilizadores: ' + err.message);
+  }
+}
+
+function gerenciarUsuarios(empresaId, nomeEmpresa) {
+  activeUserManageEmpresaId = empresaId;
+  voltarListaUsuarios();
+  document.getElementById('modal-user-titulo').innerText = 'Gestão de Acessos — ' + nomeEmpresa;
+  document.getElementById('modalUsuarios').classList.add('active');
+
+  if (unsubUsuariosEmpresa) unsubUsuariosEmpresa();
+  atualizarListaUsuariosEmpresa();
+  unsubUsuariosEmpresa = db.collection('usuarios').where('empresaId', '==', empresaId)
+    .onSnapshot(() => atualizarListaUsuariosEmpresa(), err => {
+      console.error(err);
+      alert('Sem permissão para listar utilizadores. Publique firestore.rules no Firebase Console.\n\n' + err.message);
+    });
+}
+window.gerenciarUsuarios = gerenciarUsuarios;
+
 function fecharModalUsuarios() {
+  voltarListaUsuarios();
   document.getElementById('modalUsuarios').classList.remove('active');
-  if(unsubUsuariosEmpresa) unsubUsuariosEmpresa();
+  if (unsubUsuariosEmpresa) { unsubUsuariosEmpresa(); unsubUsuariosEmpresa = null; }
   document.getElementById('form-novo-usuario').reset();
 }
 
 document.getElementById('form-novo-usuario').addEventListener('submit', e => {
   e.preventDefault();
-  if(!activeUserManageEmpresaId) return;
-  const email = document.getElementById('new-user-email').value;
+  if (!activeUserManageEmpresaId) return;
+  const email = document.getElementById('new-user-email').value.trim();
   const senha = document.getElementById('new-user-senha').value;
   const nome = document.getElementById('new-user-nome').value.trim();
   const role = document.getElementById('new-user-role').value;
 
   secondAuth.createUserWithEmailAndPassword(email, senha)
     .then(res => {
-      return db.collection('usuarios').doc(res.user.uid).set({ email, nome, role, empresaId: activeUserManageEmpresaId });
+      const uid = res.user.uid;
+      return db.collection('usuarios').doc(uid).set({
+        email, nome, role, empresaId: activeUserManageEmpresaId
+      }).then(() => {
+        return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
+          const emp = empSnap.data() || {};
+          const patch = {};
+          if (!emp.emailAcesso) patch.emailAcesso = email;
+          if (!emp.adminUid) patch.adminUid = uid;
+          if (Object.keys(patch).length) return empSnap.ref.update(patch);
+        });
+      });
     })
     .then(() => {
       secondAuth.signOut();
       document.getElementById('form-novo-usuario').reset();
+      atualizarListaUsuariosEmpresa();
     })
-    .catch(err => alert("Falha ao registrar credenciais: " + err.message));
+    .catch(err => alert('Falha ao criar utilizador: ' + err.message));
 });
 
+function mostrarPainelEditarUsuario(show) {
+  const lista = document.getElementById('painel-lista-usuarios-empresa');
+  const editar = document.getElementById('painel-editar-usuario-empresa');
+  if (lista) lista.classList.toggle('hidden', show);
+  if (editar) {
+    editar.classList.toggle('hidden', !show);
+    if (show) editar.classList.add('flex');
+  }
+}
 
-let usuarioEditId = null;
+function voltarListaUsuarios() {
+  usuarioEditId = null;
+  usuarioEditCol = 'usuarios';
+  usuarioEditEmail = '';
+  document.getElementById('form-editar-usuario')?.reset();
+  mostrarPainelEditarUsuario(false);
+}
+window.voltarListaUsuarios = voltarListaUsuarios;
 
-function editarUsuario(uid) {
-  db.collection('usuarios').doc(uid).get().then(doc => {
-    if (!doc.exists) { alert('Utilizador não encontrado.'); return; }
-    const u = doc.data();
+async function editarUsuario(uid, col) {
+  if (!uid) return;
+  try {
+    let found = null;
+    if (col === 'users') {
+      const d = await db.collection('users').doc(uid).get();
+      if (d.exists) found = { doc: d, col: 'users' };
+    }
+    if (!found) {
+      const d = await db.collection('usuarios').doc(uid).get();
+      if (d.exists) found = { doc: d, col: 'usuarios' };
+    }
+    if (!found) {
+      found = await getUsuarioDoc(uid);
+    }
+    if (!found) { alert('Utilizador não encontrado.'); return; }
+    const u = found.doc.data();
     if (u.role === 'superadmin') { alert('Contas de superadministrador não podem ser editadas aqui.'); return; }
     usuarioEditId = uid;
-    document.getElementById('edit-user-email').value = u.email || '';
+    usuarioEditCol = found.col;
+    usuarioEditEmail = u.email || '';
+    document.getElementById('edit-user-email').value = usuarioEditEmail;
     document.getElementById('edit-user-nome').value = u.nome || '';
     document.getElementById('edit-user-role').value = u.role === 'admin' ? 'admin' : 'user';
-    document.getElementById('modalEditarUsuario').classList.add('active');
-  }).catch(err => alert(err.message));
+    mostrarPainelEditarUsuario(true);
+  } catch (err) {
+    alert('Erro ao carregar: ' + err.message);
+  }
 }
+window.editarUsuario = editarUsuario;
 
-function fecharModalEditarUsuario() {
-  usuarioEditId = null;
-  document.getElementById('modalEditarUsuario').classList.remove('active');
-  document.getElementById('form-editar-usuario').reset();
-}
+document.getElementById('btn-reset-senha-usuario')?.addEventListener('click', () => {
+  if (!usuarioEditEmail) { alert('Sem e-mail para redefinição.'); return; }
+  auth.sendPasswordResetEmail(usuarioEditEmail)
+    .then(() => alert('E-mail de redefinição enviado para ' + usuarioEditEmail))
+    .catch(err => alert('Erro ao enviar: ' + err.message));
+});
 
 document.getElementById('form-editar-usuario').addEventListener('submit', e => {
   e.preventDefault();
   if (!usuarioEditId) return;
   const nome = document.getElementById('edit-user-nome').value.trim();
   const role = document.getElementById('edit-user-role').value;
-  db.collection('usuarios').doc(usuarioEditId).update({ nome, role })
-    .then(() => fecharModalEditarUsuario())
-    .catch(err => alert('Erro ao guardar: ' + err.message));
+  const btn = document.getElementById('btn-salvar-edit-user');
+  if (btn) { btn.disabled = true; btn.textContent = 'A guardar…'; }
+
+  const ref = db.collection(usuarioEditCol).doc(usuarioEditId);
+  ref.update({ nome, role, empresaId: activeUserManageEmpresaId })
+    .then(() => {
+      if (activeUserManageEmpresaId && usuarioEditCol === 'usuarios') {
+        return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
+          if (!empSnap.exists) return;
+          const emp = empSnap.data();
+          const patch = {};
+          if (emp.adminUid === usuarioEditId || emp.emailAcesso === usuarioEditEmail) {
+            if (nome) patch.nomeUsuario = nome;
+          }
+          if (Object.keys(patch).length) return empSnap.ref.update(patch);
+        });
+      }
+    })
+    .then(() => {
+      alert('Utilizador atualizado.');
+      voltarListaUsuarios();
+      atualizarListaUsuariosEmpresa();
+    })
+    .catch(err => alert('Erro ao guardar: ' + err.message + '\n\nConfirme que publicou firestore.rules no Firebase (superadmin).'))
+    .finally(() => { if (btn) { btn.disabled = false; btn.textContent = 'Guardar alterações'; } });
 });
 
-function removerAcessoUsuario(uid) {
-  if(confirm("Deseja bloquear este acesso? O perfil será removido da base de dados.")) {
-    db.collection('usuarios').doc(uid).delete().catch(err => alert(err.message));
-  }
+function removerAcessoUsuario(uid, col) {
+  if (!confirm('Remover este acesso? O perfil será apagado (o login no Firebase Authentication mantém-se até remover manualmente no Console).')) return;
+  const c = col || 'usuarios';
+  db.collection(c).doc(uid).delete()
+    .then(() => atualizarListaUsuariosEmpresa())
+    .catch(err => alert(err.message));
 }
+window.removerAcessoUsuario = removerAcessoUsuario;
 
 /* ============================================================
    📈 MÓDULO: EXECUÇÃO DO PROJETO DE IMPLANTAÇÃO (CLIENTE / ADMIN)
@@ -1344,7 +1508,9 @@ function excluirTarefa(id) {
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.classList.remove('active');
+    if (e.target !== overlay) return;
+    if (overlay.id === 'modalUsuarios' && usuarioEditId) return;
+    overlay.classList.remove('active');
   });
 });
 </script>

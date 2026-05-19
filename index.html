@@ -165,7 +165,8 @@
                 <th class="p-2 border-r">Unidade Operacional</th>
                 <th class="p-2 border-r">Máquinas</th>
                 <th class="p-2 border-r">Horas</th>
-                <th class="p-2">Acumulado</th>
+                <th class="p-2 border-r">Acumulado</th>
+                <th id="th-acao-escopo" class="p-2 text-center w-24 hidden">Ação</th>
               </tr>
             </thead>
             <tbody id="tabela" class="divide-y text-gray-700 font-mono text-xs"></tbody>
@@ -211,6 +212,7 @@
             <tr>
               <th class="p-2 border-r text-center w-12">Nº</th>
               <th class="p-2 border-r">Atividade / Entrega Estratégica</th>
+              <th class="p-2 border-r w-36">Unidade / Setor</th>
               <th class="p-2 border-r w-32">Responsável</th>
               <th class="p-2 border-r w-40">Profissional Alocado</th>
               <th class="p-2 border-r text-center w-28">Início</th>
@@ -304,7 +306,7 @@
 
 <div id="modalEscopo" class="modal-overlay">
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
-    <h3 class="text-lg font-bold text-gray-800">Adicionar Unidade Operacional</h3>
+    <h3 id="modal-escopo-titulo" class="text-lg font-bold text-gray-800">Adicionar Unidade Operacional</h3>
     <form id="form-escopo" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Fase / Ordem Sequencial</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome da Unidade Operacional</label><input type="text" id="escopo-unidade" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Linha de Montagem 02"></div>
@@ -312,7 +314,7 @@
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Cor de Identificação (Hexadecimal)</label><input type="color" id="escopo-cor" class="w-full h-10 p-1 border rounded-lg bg-white" value="#10b981"></div>
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="fecharModalEscopo()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
-        <button type="submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Salvar Unidade</button>
+        <button type="submit" id="btn-escopo-submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Salvar Unidade</button>
       </div>
     </form>
   </div>
@@ -323,6 +325,16 @@
     <h3 class="text-lg font-bold text-gray-800">Agendar Entrega no Cronograma</h3>
     <form id="form-tarefa" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Descrição do Milestone / Atividade</label><input type="text" id="tar-nome" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Instalação Física dos Coletores Teep"></div>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Unidade / Setor de Trabalho</label>
+        <select id="tar-unidade" class="w-full p-2 border rounded-lg text-sm bg-white">
+          <option value="">Selecione a unidade do escopo</option>
+        </select>
+      </div>
+      <div id="tar-setor-outro-wrap" class="hidden">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Nome do setor (outro)</label>
+        <input type="text" id="tar-setor-outro" class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Manutenção, Qualidade…">
+      </div>
       <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Empresa Responsável</label>
         <select id="tar-empresa" class="w-full p-2 border rounded-lg text-sm bg-white"><option value="Teep">Teep</option><option value="Cliente">Cliente</option></select>
@@ -412,6 +424,8 @@ let currentUser = null;
 let userRole = null; 
 let currentEmpresaId = null;
 let cacheProfissionais = [];
+let cacheEscopo = [];
+let escopoEditId = null;
 
 // Ouvintes (Listeners) em Tempo Real
 let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null;
@@ -511,7 +525,7 @@ function voltarParaAdmin() {
 }
 
 function configurarPermissoesInterface(podeEditar) {
-  const acoes = ['btn-add-profissional', 'btn-add-tarefa', 'btn-add-escopo', 'th-acao-tarefa'];
+  const acoes = ['btn-add-profissional', 'btn-add-tarefa', 'btn-add-escopo', 'th-acao-tarefa', 'th-acao-escopo'];
   acoes.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
@@ -730,17 +744,26 @@ function iniciarListenersProjeto() {
 function getHoras(q){ const f = tabelaTeep.find(x => q >= x.min && q <= x.max); return f ? f.horas : 0; }
 
 function renderEscopoDinamicamente(dados) {
+  cacheEscopo = dados;
+  atualizarSelectUnidadesTarefa();
+
   let ac=0, tm=0, th=0;
   const tabela = document.getElementById('tabela');
   const tl = document.getElementById('timeline');
   const ttl = document.getElementById('timelineTotal');
   const leg = document.getElementById('legenda');
-  
+  const thAcaoEscopo = document.getElementById('th-acao-escopo');
+  const podeEditar = podeEditarProjeto();
+
   if(!tabela) return;
   tabela.innerHTML = ''; tl.innerHTML = ''; ttl.innerHTML = ''; leg.innerHTML = '';
-  
+  if (thAcaoEscopo) {
+    if (podeEditar) thAcaoEscopo.classList.remove('hidden');
+    else thAcaoEscopo.classList.add('hidden');
+  }
+
   if (dados.length === 0) {
-    tabela.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 italic">Nenhuma unidade cadastrada no escopo do projeto.</td></tr>`;
+    tabela.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">Nenhuma unidade cadastrada no escopo do projeto.</td></tr>`;
     document.getElementById('totalMaquinas').innerText = 0;
     document.getElementById('totalHoras').innerText = '0h';
     return;
@@ -752,15 +775,21 @@ function renderEscopoDinamicamente(dados) {
   
   dados.forEach((d, i) => {
     const h = hp[i]; ac += h;
-    const btnDelEscopo = podeEditarProjeto() ? `<button onclick="excluirUnidadeEscopo('${escapeHtml(d.id)}')" class="text-red-400 hover:text-red-600 font-bold ml-2">×</button>` : '';
-    
+    const eid = escapeHtml(d.id);
+    const tdAcaoEscopo = podeEditar ? `
+      <td class="p-2 text-center whitespace-nowrap">
+        <button type="button" onclick="editarUnidadeEscopo('${eid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
+        <button type="button" onclick="excluirUnidadeEscopo('${eid}')" class="text-red-500 hover:text-red-700 font-bold">×</button>
+      </td>` : '';
+
     tabela.innerHTML += `
       <tr class="hover:bg-gray-50">
         <td class="p-2 border-r text-center">${d.ordem}</td>
-        <td class="p-2 border-r flex justify-between items-center"><span>${escapeHtml(d.unidade)}</span>${btnDelEscopo}</td>
+        <td class="p-2 border-r">${escapeHtml(d.unidade)}</td>
         <td class="p-2 border-r text-center">${escapeHtml(d.maquinas)}</td>
         <td class="p-2 border-r text-center">${h}h</td>
-        <td class="p-2 font-bold text-center bg-gray-50/50">${ac}h</td>
+        <td class="p-2 border-r font-bold text-center bg-gray-50/50">${ac}h</td>
+        ${tdAcaoEscopo}
       </tr>`;
       
     const p = th ? (h / th) * 100 : 0;
@@ -817,6 +846,7 @@ function renderTarefas(tarefas) {
       <tr class="${corFundoLinha} border-b">
         <td class="p-2 border-r text-center text-gray-400 font-mono text-[11px]">${i+1}</td>
         <td class="p-2 border-r font-medium text-gray-800">${escapeHtml(t.nome)}</td>
+        <td class="p-2 border-r text-gray-600 text-[11px]">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
         <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${t.empresa==='Teep'?'bg-gray-200 text-gray-800':'bg-orange-100 text-orange-800'}">${escapeHtml(t.empresa)}</span></td>
         <td class="p-2 border-r text-gray-600 text-sm">${escapeHtml(t.profNome)}</td>
         <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.inicio)}</td>
@@ -839,6 +869,11 @@ function alterarStatus(id, nv) {
 }
 
 // Atualização Dinâmica do Formulário de Vinculação de Atividades
+function formatarUnidadeSetorTarefa(t) {
+  if (t.unidadeNome && t.setor && t.setor !== t.unidadeNome) return `${t.unidadeNome} · ${t.setor}`;
+  return t.unidadeNome || t.setor || '—';
+}
+
 function atualizarSelectProfissionais() {
   const sel = document.getElementById('tar-prof');
   if(!sel) return;
@@ -846,6 +881,26 @@ function atualizarSelectProfissionais() {
   cacheProfissionais.forEach(p => {
     sel.innerHTML += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.nome)} (${escapeHtml(p.empresa)})</option>`;
   });
+}
+
+function atualizarSelectUnidadesTarefa() {
+  const sel = document.getElementById('tar-unidade');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione a unidade do escopo</option>';
+  cacheEscopo.forEach(u => {
+    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Fase ${escapeHtml(u.ordem)}: ${escapeHtml(u.unidade)}</option>`;
+  });
+  sel.innerHTML += '<option value="__outro__">Outro setor (especificar)</option>';
+  if ([...sel.options].some(o => o.value === atual)) sel.value = atual;
+  toggleSetorOutroTarefa();
+}
+
+function toggleSetorOutroTarefa() {
+  const sel = document.getElementById('tar-unidade');
+  const wrap = document.getElementById('tar-setor-outro-wrap');
+  if (!sel || !wrap) return;
+  wrap.classList.toggle('hidden', sel.value !== '__outro__');
 }
 
 // Operações de Cadastro e Exclusão no Projeto (Firestore Cloud)
@@ -865,41 +920,110 @@ function excluirProfissional(id) {
   }
 }
 
-function abrirModalEscopo() { document.getElementById('modalEscopo').classList.add('active'); }
-function fecharModalEscopo() { document.getElementById('modalEscopo').classList.remove('active'); document.getElementById('form-escopo').reset(); }
+function abrirModalEscopo(idEditar) {
+  escopoEditId = idEditar || null;
+  const titulo = document.getElementById('modal-escopo-titulo');
+  const btn = document.getElementById('btn-escopo-submit');
+  const form = document.getElementById('form-escopo');
+  form.reset();
+  document.getElementById('escopo-cor').value = '#5C8374';
+
+  if (escopoEditId) {
+    const u = cacheEscopo.find(x => x.id === escopoEditId);
+    if (u) {
+      document.getElementById('escopo-ordem').value = u.ordem;
+      document.getElementById('escopo-unidade').value = u.unidade;
+      document.getElementById('escopo-maquinas').value = u.maquinas;
+      document.getElementById('escopo-cor').value = u.cor || '#5C8374';
+    }
+    titulo.innerText = 'Editar Unidade Operacional';
+    btn.innerText = 'Guardar alterações';
+  } else {
+    titulo.innerText = 'Adicionar Unidade Operacional';
+    btn.innerText = 'Salvar Unidade';
+  }
+  document.getElementById('modalEscopo').classList.add('active');
+}
+
+function editarUnidadeEscopo(id) { abrirModalEscopo(id); }
+
+function fecharModalEscopo() {
+  escopoEditId = null;
+  document.getElementById('modalEscopo').classList.remove('active');
+  document.getElementById('form-escopo').reset();
+}
+
 document.getElementById('form-escopo').addEventListener('submit', e => {
   e.preventDefault();
   const ordem = Number(document.getElementById('escopo-ordem').value);
-  const unidade = document.getElementById('escopo-unidade').value;
+  const unidade = document.getElementById('escopo-unidade').value.trim();
   const maquinas = Number(document.getElementById('escopo-maquinas').value);
   const cor = document.getElementById('escopo-cor').value;
-  db.collection('empresas').doc(currentEmpresaId).collection('escopo').add({ ordem, unidade, maquinas, cor })
-    .then(() => fecharModalEscopo());
+  const payload = { ordem, unidade, maquinas, cor };
+  const col = db.collection('empresas').doc(currentEmpresaId).collection('escopo');
+  const prom = escopoEditId ? col.doc(escopoEditId).update(payload) : col.add(payload);
+  prom.then(() => fecharModalEscopo());
 });
+
 function excluirUnidadeEscopo(id) {
   if(confirm('Deseja remover esta unidade e recalcular a carga horária do projeto?')) {
     db.collection('empresas').doc(currentEmpresaId).collection('escopo').doc(id).delete();
   }
 }
 
-function abrirModalTarefa() { document.getElementById('modalTarefa').classList.add('active'); }
-function fecharModalTarefa() { document.getElementById('modalTarefa').classList.remove('active'); document.getElementById('form-tarefa').reset(); }
+function abrirModalTarefa() {
+  atualizarSelectUnidadesTarefa();
+  document.getElementById('modalTarefa').classList.add('active');
+}
+
+function fecharModalTarefa() {
+  document.getElementById('modalTarefa').classList.remove('active');
+  document.getElementById('form-tarefa').reset();
+  document.getElementById('tar-setor-outro-wrap')?.classList.add('hidden');
+}
+
+document.getElementById('tar-unidade')?.addEventListener('change', toggleSetorOutroTarefa);
+
+function obterUnidadeSetorFormTarefa() {
+  const sel = document.getElementById('tar-unidade').value;
+  let unidadeEscopoId = '';
+  let unidadeNome = '';
+  let setor = '';
+
+  if (sel === '__outro__') {
+    setor = document.getElementById('tar-setor-outro').value.trim();
+    unidadeNome = setor || 'Outro';
+  } else if (sel) {
+    unidadeEscopoId = sel;
+    const u = cacheEscopo.find(x => x.id === sel);
+    if (u) {
+      unidadeNome = u.unidade;
+      setor = u.unidade;
+    }
+  }
+  return { unidadeEscopoId, unidadeNome, setor };
+}
+
 document.getElementById('form-tarefa').addEventListener('submit', e => {
   e.preventDefault();
-  const nome = document.getElementById('tar-nome').value;
+  const nome = document.getElementById('tar-nome').value.trim();
   const empresa = document.getElementById('tar-empresa').value;
   const profId = document.getElementById('tar-prof').value;
-  let profNome = "Não Alocado";
-  if(profId) { const p = cacheProfissionais.find(x => x.id === profId); if(p) profNome = p.nome; }
+  let profNome = 'Não Alocado';
+  if (profId) { const p = cacheProfissionais.find(x => x.id === profId); if (p) profNome = p.nome; }
   const inicio = document.getElementById('tar-inicio').value;
   const fim = document.getElementById('tar-fim').value;
+  const { unidadeEscopoId, unidadeNome, setor } = obterUnidadeSetorFormTarefa();
+
   if (fim < inicio) {
     alert('A data de fim deve ser igual ou posterior à data de início.');
     return;
   }
 
   db.collection('empresas').doc(currentEmpresaId).collection('tarefas').add({
-    nome, empresa, profId, profNome, inicio, fim, status: 'pendente', criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    nome, empresa, profId, profNome, inicio, fim,
+    unidadeEscopoId, unidadeNome, setor,
+    status: 'pendente', criadoEm: firebase.firestore.FieldValue.serverTimestamp()
   }).then(() => fecharModalTarefa());
 });
 function excluirTarefa(id) {

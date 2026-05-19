@@ -218,7 +218,7 @@
               <th class="p-2 border-r text-center w-28">Início</th>
               <th class="p-2 border-r text-center w-28">Previsão Fim</th>
               <th class="p-2 border-r text-center w-36">Estado</th>
-              <th id="th-acao-tarefa" class="p-2 text-center w-12 hidden">Ação</th>
+              <th id="th-acao-tarefa" class="p-2 text-center w-28 hidden">Ação</th>
             </tr>
           </thead>
           <tbody id="tabelaTarefas" class="divide-y text-gray-700 text-xs"></tbody>
@@ -322,7 +322,7 @@
 
 <div id="modalTarefa" class="modal-overlay">
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
-    <h3 class="text-lg font-bold text-gray-800">Agendar Entrega no Cronograma</h3>
+    <h3 id="modal-tarefa-titulo" class="text-lg font-bold text-gray-800">Agendar Entrega no Cronograma</h3>
     <form id="form-tarefa" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Descrição do Milestone / Atividade</label><input type="text" id="tar-nome" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Instalação Física dos Coletores Teep"></div>
       <div>
@@ -349,7 +349,7 @@
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="fecharModalTarefa()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
-        <button type="submit" class="px-4 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 shadow-sm">Adicionar ao Cronograma</button>
+        <button type="submit" id="btn-tarefa-submit" class="px-4 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 shadow-sm">Adicionar ao Cronograma</button>
       </div>
     </form>
   </div>
@@ -426,6 +426,8 @@ let currentEmpresaId = null;
 let cacheProfissionais = [];
 let cacheEscopo = [];
 let escopoEditId = null;
+let tarefaEditId = null;
+let cacheTarefas = [];
 
 // Ouvintes (Listeners) em Tempo Real
 let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null;
@@ -735,8 +737,8 @@ function iniciarListenersProjeto() {
 
   // Listener 3: Cronograma Executivo de Tarefas
   unsubTarefas = db.collection('empresas').doc(currentEmpresaId).collection('tarefas').orderBy('inicio').onSnapshot(snap => {
-    const tarefas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderTarefas(tarefas);
+    cacheTarefas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTarefas(cacheTarefas);
   });
 }
 
@@ -840,7 +842,10 @@ function renderTarefas(tarefas) {
 
     const tid = escapeHtml(t.id);
     const selectDisabled = podeEditarTotal ? '' : 'disabled';
-    const tdAcao = podeEditarTotal ? `<td class="p-2 text-center"><button onclick="excluirTarefa('${tid}')" class="text-gray-300 hover:text-red-500 text-xl font-bold leading-none transition">×</button></td>` : '';
+    const tdAcao = podeEditarTotal ? `<td class="p-2 text-center whitespace-nowrap">
+        <button type="button" onclick="editarTarefa('${tid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
+        <button type="button" onclick="excluirTarefa('${tid}')" class="text-red-500 hover:text-red-700 font-bold">×</button>
+      </td>` : '';
 
     tbody.innerHTML += `
       <tr class="${corFundoLinha} border-b">
@@ -971,12 +976,60 @@ function excluirUnidadeEscopo(id) {
   }
 }
 
-function abrirModalTarefa() {
+function preencherUnidadeTarefaNoForm(t) {
+  const sel = document.getElementById('tar-unidade');
+  const outro = document.getElementById('tar-setor-outro');
+  if (!sel) return;
+
+  if (t.unidadeEscopoId && cacheEscopo.some(u => u.id === t.unidadeEscopoId)) {
+    sel.value = t.unidadeEscopoId;
+  } else if (t.unidadeNome || t.setor) {
+    sel.value = '__outro__';
+    if (outro) {
+      outro.value = (t.setor && t.setor !== t.unidadeNome) ? t.setor : (t.unidadeNome || t.setor || '');
+    }
+  } else {
+    sel.value = '';
+  }
+  toggleSetorOutroTarefa();
+}
+
+function abrirModalTarefa(idEditar) {
+  tarefaEditId = idEditar || null;
+  const titulo = document.getElementById('modal-tarefa-titulo');
+  const btn = document.getElementById('btn-tarefa-submit');
+  const form = document.getElementById('form-tarefa');
+
+  form.reset();
+  document.getElementById('tar-setor-outro-wrap')?.classList.add('hidden');
   atualizarSelectUnidadesTarefa();
+
+  if (tarefaEditId) {
+    const t = cacheTarefas.find(x => x.id === tarefaEditId);
+    if (t) {
+      document.getElementById('tar-nome').value = t.nome || '';
+      document.getElementById('tar-empresa').value = t.empresa || 'Teep';
+      document.getElementById('tar-inicio').value = t.inicio || '';
+      document.getElementById('tar-fim').value = t.fim || '';
+      atualizarSelectProfissionais();
+      document.getElementById('tar-prof').value = t.profId || '';
+      preencherUnidadeTarefaNoForm(t);
+    }
+    titulo.innerText = 'Editar Atividade do Cronograma';
+    btn.innerText = 'Guardar alterações';
+  } else {
+    titulo.innerText = 'Agendar Entrega no Cronograma';
+    btn.innerText = 'Adicionar ao Cronograma';
+    atualizarSelectProfissionais();
+  }
+
   document.getElementById('modalTarefa').classList.add('active');
 }
 
+function editarTarefa(id) { abrirModalTarefa(id); }
+
 function fecharModalTarefa() {
+  tarefaEditId = null;
   document.getElementById('modalTarefa').classList.remove('active');
   document.getElementById('form-tarefa').reset();
   document.getElementById('tar-setor-outro-wrap')?.classList.add('hidden');
@@ -1020,11 +1073,21 @@ document.getElementById('form-tarefa').addEventListener('submit', e => {
     return;
   }
 
-  db.collection('empresas').doc(currentEmpresaId).collection('tarefas').add({
+  const col = db.collection('empresas').doc(currentEmpresaId).collection('tarefas');
+  const payload = {
     nome, empresa, profId, profNome, inicio, fim,
-    unidadeEscopoId, unidadeNome, setor,
-    status: 'pendente', criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => fecharModalTarefa());
+    unidadeEscopoId, unidadeNome, setor
+  };
+
+  if (tarefaEditId) {
+    col.doc(tarefaEditId).update(payload).then(() => fecharModalTarefa());
+  } else {
+    col.add({
+      ...payload,
+      status: 'pendente',
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => fecharModalTarefa());
+  }
 });
 function excluirTarefa(id) {
   if(confirm("Deseja eliminar esta atividade do cronograma executivo?")) {

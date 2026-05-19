@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -186,15 +186,6 @@
         </div>
       </div>
 
-      <div class="space-y-4 pt-4 border-t">
-        <h3 class="text-sm font-bold text-gray-700">Cronograma de Ativação por Esforço de Unidades (Timeline)</h3>
-        <div id="timeline" class="space-y-3"></div>
-        <div class="pt-2">
-          <span class="text-xs font-bold text-gray-500 block mb-1">Distribuição Unificada do Projeto</span>
-          <div id="timelineTotal" class="w-full bg-gray-200 rounded-full h-7 flex overflow-hidden shadow-inner border"></div>
-          <div id="legenda" class="flex flex-wrap gap-3 text-xs mt-2 text-gray-600 font-medium"></div>
-        </div>
-      </div>
     </section>
 
     <section class="bg-white p-5 rounded-xl border shadow-sm space-y-4">
@@ -311,7 +302,6 @@
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Fase / Ordem Sequencial</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome da Unidade Operacional</label><input type="text" id="escopo-unidade" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Linha de Montagem 02"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Quantidade de Máquinas / Coletores</label><input type="number" id="escopo-maquinas" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 12"></div>
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Cor de Identificação (Hexadecimal)</label><input type="color" id="escopo-cor" class="w-full h-10 p-1 border rounded-lg bg-white" value="#10b981"></div>
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="fecharModalEscopo()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
         <button type="submit" id="btn-escopo-submit" class="px-4 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700">Salvar Unidade</button>
@@ -763,14 +753,11 @@ function renderEscopoDinamicamente(dados) {
 
   let ac=0, tm=0, th=0;
   const tabela = document.getElementById('tabela');
-  const tl = document.getElementById('timeline');
-  const ttl = document.getElementById('timelineTotal');
-  const leg = document.getElementById('legenda');
   const thAcaoEscopo = document.getElementById('th-acao-escopo');
   const podeEditar = podeEditarProjeto();
 
   if(!tabela) return;
-  tabela.innerHTML = ''; tl.innerHTML = ''; ttl.innerHTML = ''; leg.innerHTML = '';
+  tabela.innerHTML = '';
   if (thAcaoEscopo) {
     if (podeEditar) thAcaoEscopo.classList.remove('hidden');
     else thAcaoEscopo.classList.add('hidden');
@@ -805,20 +792,6 @@ function renderEscopoDinamicamente(dados) {
         <td class="p-2 border-r font-bold text-center bg-gray-50/50">${ac}h</td>
         ${tdAcaoEscopo}
       </tr>`;
-      
-    const p = th ? (h / th) * 100 : 0;
-    const corHex = d.cor || '#4b5563';
-    
-    tl.innerHTML += `
-      <div>
-        <div class="flex justify-between text-xs mb-1 font-medium text-gray-600"><span>Fase ${escapeHtml(d.ordem)}: ${escapeHtml(d.unidade)}</span><span>${h}h</span></div>
-        <div class="w-full bg-gray-200 rounded-full h-5 shadow-inner">
-          <div style="width:${p}%;background:${corHex}" class="h-5 rounded-full text-[10px] text-white font-bold flex items-center justify-center shadow">${Math.round(p)}%</div>
-        </div>
-      </div>`;
-      
-    ttl.innerHTML += `<div style="width:${p}%;background:${corHex}" class="h-full flex items-center justify-center text-[10px] text-white font-bold shadow-sm" title="${escapeHtml(d.unidade)}">${Math.round(p)}%</div>`;
-    leg.innerHTML += `<div class="flex items-center gap-1.5"><span style="display:inline-block;width:12px;height:12px;background:${corHex}" class="rounded shadow-sm"></span>${escapeHtml(d.unidade)} (${h}h)</div>`;
   });
   
   document.getElementById('totalMaquinas').innerText = tm;
@@ -1052,7 +1025,6 @@ function abrirModalEscopo(idEditar) {
   const btn = document.getElementById('btn-escopo-submit');
   const form = document.getElementById('form-escopo');
   form.reset();
-  document.getElementById('escopo-cor').value = '#5C8374';
 
   if (escopoEditId) {
     const u = cacheEscopo.find(x => x.id === escopoEditId);
@@ -1060,7 +1032,6 @@ function abrirModalEscopo(idEditar) {
       document.getElementById('escopo-ordem').value = u.ordem;
       document.getElementById('escopo-unidade').value = u.unidade;
       document.getElementById('escopo-maquinas').value = u.maquinas;
-      document.getElementById('escopo-cor').value = u.cor || '#5C8374';
     }
     titulo.innerText = 'Editar Unidade Operacional';
     btn.innerText = 'Guardar alterações';
@@ -1084,8 +1055,7 @@ document.getElementById('form-escopo').addEventListener('submit', e => {
   const ordem = Number(document.getElementById('escopo-ordem').value);
   const unidade = document.getElementById('escopo-unidade').value.trim();
   const maquinas = Number(document.getElementById('escopo-maquinas').value);
-  const cor = document.getElementById('escopo-cor').value;
-  const payload = { ordem, unidade, maquinas, cor };
+  const payload = { ordem, unidade, maquinas };
   const col = db.collection('empresas').doc(currentEmpresaId).collection('escopo');
   const prom = escopoEditId ? col.doc(escopoEditId).update(payload) : col.add(payload);
   prom.then(() => fecharModalEscopo());

@@ -98,7 +98,7 @@
           <thead class="bg-gray-100 text-gray-600 uppercase text-[11px] tracking-wider font-bold border-b">
             <tr>
               <th class="p-3">Nome da Empresa</th>
-              <th class="p-3">Contacto</th>
+              <th class="p-3">Utilizador</th>
               <th class="p-3 text-center">Ações de Gestão</th>
               <th class="p-3 text-center">Estado</th>
               <th class="p-3 text-right">Acessar</th>
@@ -235,7 +235,7 @@
     <h3 class="text-lg font-bold text-gray-800">Registar Nova Empresa Cliente</h3>
     <form id="form-nova-empresa" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome da Organização</label><input type="text" id="add-empresa-nome" required class="w-full p-2 border rounded-lg text-sm"></div>
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail de Contacto</label><input type="email" id="add-empresa-contato" required class="w-full p-2 border rounded-lg text-sm"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome do usuário</label><input type="text" id="add-empresa-contato" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: João Silva"></div>
       <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
         <span class="text-xs font-bold text-gray-600 block">Criar Conta de Acesso Administrador</span>
         <div><label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">E-mail de Acesso do Cliente</label><input type="email" id="add-empresa-user-email" required class="w-full p-2 border rounded-lg text-sm bg-white"></div>
@@ -578,11 +578,11 @@ function iniciarPainelAdmin() {
       const emp = doc.data();
       const id = escapeHtml(doc.id);
       const nome = escapeHtml(emp.nome);
-      const contato = escapeHtml(emp.contato);
+      const contato = escapeHtml(emp.nomeUsuario || emp.contato);
       tbody.innerHTML += `
         <tr class="hover:bg-gray-50">
           <td class="p-3 font-bold text-gray-800">${nome}</td>
-          <td class="p-3 text-gray-500 font-mono text-xs">${contato}</td>
+          <td class="p-3 text-gray-600 text-sm">${contato}</td>
           <td class="p-3 text-center space-x-1">
             <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200">Utilizadores</button>
             <button onclick="alternarEstadoEmpresa('${id}', ${!!emp.ativa})" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
@@ -611,11 +611,11 @@ function fecharModalNovaEmpresa() { document.getElementById('modalNovaEmpresa').
 document.getElementById('form-nova-empresa').addEventListener('submit', e => {
   e.preventDefault();
   const nome = document.getElementById('add-empresa-nome').value;
-  const contato = document.getElementById('add-empresa-contato').value;
+  const nomeUsuario = document.getElementById('add-empresa-contato').value.trim();
   const uEmail = document.getElementById('add-empresa-user-email').value;
   const uSenha = document.getElementById('add-empresa-user-senha').value;
 
-  db.collection('empresas').add({ nome, contato, ativa: true, criadaEm: firebase.firestore.FieldValue.serverTimestamp() })
+  db.collection('empresas').add({ nome, nomeUsuario, ativa: true, criadaEm: firebase.firestore.FieldValue.serverTimestamp() })
     .then(docRef => {
       return secondAuth.createUserWithEmailAndPassword(uEmail, uSenha)
         .then(res => {

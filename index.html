@@ -345,8 +345,15 @@
       </div>
       <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Profissionais técnicos encarregados</label>
-        <p class="text-[10px] text-gray-400 mb-1.5">Selecione um ou mais — útil quando a empresa responsável for «Ambos».</p>
-        <div id="lista-profissionais-tarefa" class="max-h-44 overflow-y-auto border rounded-lg p-2 space-y-0.5 bg-gray-50"></div>
+        <p class="text-[10px] text-gray-400">Marque <strong>um ou mais</strong> profissionais nesta atividade.</p>
+        <p id="tar-prof-contagem" class="text-[10px] font-semibold text-[#5C8374] mt-1 mb-1">0 selecionados</p>
+        <div class="flex flex-wrap gap-1 mb-1.5">
+          <button type="button" onclick="selecionarProfissionaisTarefa('todos')" class="text-[10px] px-2 py-0.5 rounded bg-gray-200 hover:bg-gray-300 font-semibold">Todos</button>
+          <button type="button" onclick="selecionarProfissionaisTarefa('teep')" class="text-[10px] px-2 py-0.5 rounded bg-gray-200 hover:bg-gray-300 font-semibold">Só Teep</button>
+          <button type="button" onclick="selecionarProfissionaisTarefa('cliente')" class="text-[10px] px-2 py-0.5 rounded bg-orange-100 hover:bg-orange-200 font-semibold">Só Cliente</button>
+          <button type="button" onclick="selecionarProfissionaisTarefa('nenhum')" class="text-[10px] px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200">Limpar</button>
+        </div>
+        <div id="lista-profissionais-tarefa" class="min-h-[6rem] max-h-44 overflow-y-auto border rounded-lg p-2 space-y-0.5 bg-gray-50"></div>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Início</label><input type="date" id="tar-inicio" required class="w-full p-2 border rounded-lg text-sm"></div>
@@ -914,15 +921,47 @@ function htmlProfissionaisTarefa(t) {
   }).join('');
 }
 
+function atualizarContagemProfissionaisTarefa() {
+  const el = document.getElementById('tar-prof-contagem');
+  if (!el) return;
+  const n = document.querySelectorAll('#lista-profissionais-tarefa input[name="tar-prof-chk"]:checked').length;
+  el.textContent = n === 1 ? '1 profissional selecionado' : `${n} profissionais selecionados`;
+}
+
+function selecionarProfissionaisTarefa(modo) {
+  const box = document.getElementById('lista-profissionais-tarefa');
+  if (!box) return;
+  box.querySelectorAll('input[name="tar-prof-chk"]').forEach(ch => {
+    const p = cacheProfissionais.find(x => x.id === ch.value);
+    if (!p) return;
+    if (modo === 'todos') ch.checked = true;
+    else if (modo === 'nenhum') ch.checked = false;
+    else if (modo === 'teep') ch.checked = p.empresa === 'Teep';
+    else if (modo === 'cliente') ch.checked = p.empresa === 'Cliente';
+  });
+  const todos = document.getElementById('tar-prof-todos-chk');
+  if (todos) {
+    const total = box.querySelectorAll('input[name="tar-prof-chk"]').length;
+    const marcados = box.querySelectorAll('input[name="tar-prof-chk"]:checked').length;
+    todos.checked = total > 0 && marcados === total;
+  }
+  atualizarContagemProfissionaisTarefa();
+}
+
 function renderCheckboxProfissionaisTarefa(selectedIds = []) {
   const box = document.getElementById('lista-profissionais-tarefa');
   if (!box) return;
   if (!cacheProfissionais.length) {
-    box.innerHTML = '<p class="text-xs text-gray-400 italic p-2">Nenhum profissional alocado no projeto.</p>';
+    box.innerHTML = '<p class="text-xs text-gray-400 italic p-2">Cadastre profissionais na secção 1 do projeto antes de agendar atividades.</p>';
+    atualizarContagemProfissionaisTarefa();
     return;
   }
   const ids = new Set(selectedIds);
-  box.innerHTML = cacheProfissionais.map(p => {
+  const header = `<label class="flex items-center gap-2 p-1.5 border-b border-gray-200 mb-1 font-semibold text-xs text-gray-800 sticky top-0 bg-gray-50">
+    <input type="checkbox" id="tar-prof-todos-chk" class="rounded border-gray-300 text-[#5C8374] focus:ring-[#5C8374]" ${ids.size === cacheProfissionais.length && cacheProfissionais.length ? 'checked' : ''}>
+    <span>Selecionar todos</span>
+  </label>`;
+  const items = cacheProfissionais.map(p => {
     const pid = escapeHtml(p.id);
     const checked = ids.has(p.id) ? 'checked' : '';
     return `<label class="flex items-center gap-2 p-1.5 rounded hover:bg-white cursor-pointer text-xs text-gray-700">
@@ -930,6 +969,24 @@ function renderCheckboxProfissionaisTarefa(selectedIds = []) {
       <span>${escapeHtml(p.nome)} <span class="text-gray-400">(${escapeHtml(p.empresa)})</span></span>
     </label>`;
   }).join('');
+  box.innerHTML = header + items;
+
+  if (!box.dataset.bound) {
+    box.dataset.bound = '1';
+    box.addEventListener('change', e => {
+      if (e.target.id === 'tar-prof-todos-chk') {
+        box.querySelectorAll('input[name="tar-prof-chk"]').forEach(c => { c.checked = e.target.checked; });
+      }
+      if (e.target.id === 'tar-prof-todos-chk' || e.target.name === 'tar-prof-chk') {
+        const total = box.querySelectorAll('input[name="tar-prof-chk"]').length;
+        const marcados = box.querySelectorAll('input[name="tar-prof-chk"]:checked').length;
+        const todos = document.getElementById('tar-prof-todos-chk');
+        if (todos) todos.checked = total > 0 && marcados === total;
+        atualizarContagemProfissionaisTarefa();
+      }
+    });
+  }
+  atualizarContagemProfissionaisTarefa();
 }
 
 function obterProfissionaisSelecionadosTarefa() {
@@ -1100,6 +1157,17 @@ function fecharModalTarefa() {
 }
 
 document.getElementById('tar-unidade')?.addEventListener('change', toggleSetorOutroTarefa);
+
+document.getElementById('tar-empresa')?.addEventListener('change', () => {
+  if (document.getElementById('tar-empresa').value === 'Ambos') {
+    const teep = cacheProfissionais.filter(p => p.empresa === 'Teep');
+    const cli = cacheProfissionais.filter(p => p.empresa === 'Cliente');
+    if (teep.length && cli.length) {
+      const ids = [teep[0].id, cli[0].id];
+      renderCheckboxProfissionaisTarefa(ids);
+    }
+  }
+});
 
 function obterUnidadeSetorFormTarefa() {
   const sel = document.getElementById('tar-unidade').value;

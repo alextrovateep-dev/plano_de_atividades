@@ -344,8 +344,9 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-bold text-gray-500 mb-1">Profissional Técnico Encarregado</label>
-        <select id="tar-prof" class="w-full p-2 border rounded-lg text-sm bg-white"></select>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Profissionais técnicos encarregados</label>
+        <p class="text-[10px] text-gray-400 mb-1.5">Selecione um ou mais — útil quando a empresa responsável for «Ambos».</p>
+        <div id="lista-profissionais-tarefa" class="max-h-44 overflow-y-auto border rounded-lg p-2 space-y-0.5 bg-gray-50"></div>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Início</label><input type="date" id="tar-inicio" required class="w-full p-2 border rounded-lg text-sm"></div>
@@ -857,7 +858,7 @@ function renderTarefas(tarefas) {
         <td class="p-2 border-r font-medium text-gray-800">${escapeHtml(t.nome)}</td>
         <td class="p-2 border-r text-gray-600 text-[11px]">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
         <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${badgeEmpresaResponsavel(t.empresa)}">${escapeHtml(t.empresa)}</span></td>
-        <td class="p-2 border-r text-gray-600 text-sm">${escapeHtml(t.profNome)}</td>
+        <td class="p-2 border-r text-gray-600 text-[11px] leading-relaxed">${htmlProfissionaisTarefa(t)}</td>
         <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.inicio)}</td>
         <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.fim)}</td>
         <td class="p-2 border-r text-center">
@@ -889,13 +890,66 @@ function formatarUnidadeSetorTarefa(t) {
   return t.unidadeNome || t.setor || '—';
 }
 
-function atualizarSelectProfissionais() {
-  const sel = document.getElementById('tar-prof');
-  if(!sel) return;
-  sel.innerHTML = `<option value="">Nenhum profissional selecionado</option>`;
-  cacheProfissionais.forEach(p => {
-    sel.innerHTML += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.nome)} (${escapeHtml(p.empresa)})</option>`;
+function normalizarProfissionaisTarefa(t) {
+  if (t.profissionais && t.profissionais.length) return t.profissionais;
+  if (t.profIds && t.profIds.length) {
+    return t.profIds.map((id, i) => ({
+      id,
+      nome: (t.profNomes && t.profNomes[i]) || '',
+      empresa: ''
+    }));
+  }
+  if (t.profId) return [{ id: t.profId, nome: t.profNome || '', empresa: '' }];
+  return [];
+}
+
+function htmlProfissionaisTarefa(t) {
+  const list = normalizarProfissionaisTarefa(t);
+  if (!list.length) return '<span class="text-gray-400 italic">Não alocado</span>';
+  return list.map(p => {
+    const full = cacheProfissionais.find(x => x.id === p.id) || p;
+    const emp = full.empresa || '';
+    const cls = emp === 'Teep' ? 'bg-gray-200 text-gray-800' : emp === 'Cliente' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-600';
+    return `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] mr-1 mb-0.5 ${cls}">${escapeHtml(full.nome || p.nome)}</span>`;
+  }).join('');
+}
+
+function renderCheckboxProfissionaisTarefa(selectedIds = []) {
+  const box = document.getElementById('lista-profissionais-tarefa');
+  if (!box) return;
+  if (!cacheProfissionais.length) {
+    box.innerHTML = '<p class="text-xs text-gray-400 italic p-2">Nenhum profissional alocado no projeto.</p>';
+    return;
+  }
+  const ids = new Set(selectedIds);
+  box.innerHTML = cacheProfissionais.map(p => {
+    const pid = escapeHtml(p.id);
+    const checked = ids.has(p.id) ? 'checked' : '';
+    return `<label class="flex items-center gap-2 p-1.5 rounded hover:bg-white cursor-pointer text-xs text-gray-700">
+      <input type="checkbox" name="tar-prof-chk" value="${pid}" class="rounded border-gray-300 text-[#5C8374] focus:ring-[#5C8374]" ${checked}>
+      <span>${escapeHtml(p.nome)} <span class="text-gray-400">(${escapeHtml(p.empresa)})</span></span>
+    </label>`;
+  }).join('');
+}
+
+function obterProfissionaisSelecionadosTarefa() {
+  const checks = document.querySelectorAll('#lista-profissionais-tarefa input[name="tar-prof-chk"]:checked');
+  const profIds = [];
+  const profNomes = [];
+  const profissionais = [];
+  checks.forEach(ch => {
+    const p = cacheProfissionais.find(x => x.id === ch.value);
+    if (p) {
+      profIds.push(p.id);
+      profNomes.push(p.nome);
+      profissionais.push({ id: p.id, nome: p.nome, empresa: p.empresa });
+    }
   });
+  return { profIds, profNomes, profissionais };
+}
+
+function atualizarSelectProfissionais(selectedIds) {
+  renderCheckboxProfissionaisTarefa(selectedIds || []);
 }
 
 function atualizarSelectUnidadesTarefa() {
@@ -1021,8 +1075,8 @@ function abrirModalTarefa(idEditar) {
       document.getElementById('tar-empresa').value = t.empresa || 'Teep';
       document.getElementById('tar-inicio').value = t.inicio || '';
       document.getElementById('tar-fim').value = t.fim || '';
-      atualizarSelectProfissionais();
-      document.getElementById('tar-prof').value = t.profId || '';
+      const profIdsSel = t.profIds && t.profIds.length ? t.profIds : (t.profId ? [t.profId] : []);
+      atualizarSelectProfissionais(profIdsSel);
       preencherUnidadeTarefaNoForm(t);
     }
     titulo.innerText = 'Editar Atividade do Cronograma';
@@ -1071,9 +1125,9 @@ document.getElementById('form-tarefa').addEventListener('submit', e => {
   e.preventDefault();
   const nome = document.getElementById('tar-nome').value.trim();
   const empresa = document.getElementById('tar-empresa').value;
-  const profId = document.getElementById('tar-prof').value;
-  let profNome = 'Não Alocado';
-  if (profId) { const p = cacheProfissionais.find(x => x.id === profId); if (p) profNome = p.nome; }
+  const { profIds, profNomes, profissionais } = obterProfissionaisSelecionadosTarefa();
+  const profNome = profNomes.length ? profNomes.join(', ') : 'Não alocado';
+  const profId = profIds[0] || '';
   const inicio = document.getElementById('tar-inicio').value;
   const fim = document.getElementById('tar-fim').value;
   const { unidadeEscopoId, unidadeNome, setor } = obterUnidadeSetorFormTarefa();
@@ -1085,8 +1139,8 @@ document.getElementById('form-tarefa').addEventListener('submit', e => {
 
   const col = db.collection('empresas').doc(currentEmpresaId).collection('tarefas');
   const payload = {
-    nome, empresa, profId, profNome, inicio, fim,
-    unidadeEscopoId, unidadeNome, setor
+    nome, empresa, profId, profNome, profIds, profNomes, profissionais,
+    inicio, fim, unidadeEscopoId, unidadeNome, setor
   };
 
   if (tarefaEditId) {

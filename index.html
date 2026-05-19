@@ -14,11 +14,26 @@
   .view{display:none}
   .view.active{display:flex;flex-direction:column;min-height:100vh;width:100%}
   #view-login.view.active{flex-direction:column;align-items:center;justify-content:center}
+  #view-loading.view.active{flex-direction:column;align-items:center;justify-content:center}
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
 
-<div id="view-login" class="view active min-h-screen w-full bg-gray-100 px-4 py-8">
+<div id="view-loading" class="view active min-h-screen w-full bg-gray-100 px-4">
+  <div class="text-center">
+    <img
+      src="https://teep.com.br/wp-content/uploads/2023/11/cropped-cropped-teep-logo-menor-300x87.png"
+      alt="Teep"
+      width="150"
+      height="44"
+      class="h-10 w-auto mx-auto object-contain opacity-90"
+    >
+    <p class="text-gray-500 text-sm mt-6">A verificar sessão…</p>
+    <div class="mt-4 h-8 w-8 mx-auto border-2 border-[#5C8374] border-t-transparent rounded-full animate-spin" role="status" aria-label="A carregar"></div>
+  </div>
+</div>
+
+<div id="view-login" class="view min-h-screen w-full bg-gray-100 px-4 py-8">
   <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-lg max-w-md w-full mx-auto border border-gray-200">
     <div class="text-center mb-8">
       <img
@@ -345,6 +360,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+// Sessão só na janela atual (fecha o browser = pede login de novo)
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
 // Instância Auxiliar Secundária para a criação de usuários de clientes sem deslogar o Superadmin da Teep
 const secondApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
@@ -458,7 +475,15 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-function logout() { auth.signOut(); }
+function logout() {
+  document.getElementById('form-login')?.reset();
+  document.getElementById('login-erro')?.classList.add('hidden');
+  limparTodosListeners();
+  currentUser = null;
+  userRole = null;
+  currentEmpresaId = null;
+  auth.signOut();
+}
 
 document.getElementById('form-login').addEventListener('submit', e => {
   e.preventDefault();
@@ -475,7 +500,7 @@ document.getElementById('form-login').addEventListener('submit', e => {
     errDiv.classList.remove('hidden');
   }).finally(() => {
     btnLogin.disabled = false;
-    btnLogin.textContent = 'Acessar a Plataforma';
+    btnLogin.textContent = 'Acessar a plataforma';
   });
 });
 

@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasProfile() {
+      return firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid))
+        || firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function userData() {
+      return firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid))
+        ? firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data
+        : firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isTeepStaff() {
+      return isSignedIn() && hasProfile()
+        && (userData().role == 'superadmin' || userData().role == 'teep_admin');
+    }
+
+    function canEditEmpresa(empresaId) {
+      return isSignedIn() && hasProfile()
+        && (isTeepStaff() || (userData().role == 'admin' && userData().empresaId == empresaId));
+    }
+
+    function isLogoFile() {
+      return request.resource != null
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Logo da organização: empresas/{id}/logo.{png|jpg|webp|gif}
+    match /empresas/{empresaId}/{fileName} {
+      allow read: if isSignedIn() && hasProfile();
+      allow write: if canEditEmpresa(empresaId)
+        && fileName.matches('logo\\.(png|jpg|jpeg|webp|gif)')
+        && isLogoFile();
+      allow delete: if isTeepStaff();
+    }
+  }
+}

@@ -103,7 +103,7 @@
         </div>
       </div>
       <div id="trocar-senha-erro" class="text-red-600 text-xs font-medium hidden bg-red-50 p-2.5 rounded-lg border border-red-100"></div>
-      <button type="submit" class="w-full py-3.5 bg-[#5C8374] hover:bg-[#4a6b5d] text-white rounded-xl font-bold shadow-sm">Guardar e entrar no projeto</button>
+      <button type="submit" id="btn-submit-trocar-senha" class="w-full py-3.5 bg-[#5C8374] hover:bg-[#4a6b5d] text-white rounded-xl font-bold shadow-sm">Guardar e continuar</button>
     </form>
   </div>
 </div>
@@ -355,7 +355,19 @@
     <form id="form-teep-admin" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="teep-admin-email" required class="w-full p-2 border rounded-lg text-sm"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome</label><input type="text" id="teep-admin-nome" class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Maria Teep"></div>
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Senha inicial</label><div class="campo-senha-wrap"><input type="password" id="teep-admin-senha" required minlength="6" autocomplete="new-password" class="w-full p-2 border rounded-lg text-sm"><button type="button" class="btn-ver-senha" data-alvo="teep-admin-senha" aria-label="Mostrar senha" title="Mostrar senha"><span class="icon-olho-aberto" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="icon-olho-fechado" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span></button></div></div>
+      <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
+        <label class="flex items-center gap-2 text-[10px] text-gray-600 cursor-pointer">
+          <input type="checkbox" id="teep-admin-senha-provisoria" checked class="rounded">
+          Gerar <strong>senha provisória</strong> (obrigatório alterar no 1.º login)
+        </label>
+        <div class="flex gap-2 items-end">
+          <div class="flex-1">
+            <label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">Senha provisória</label>
+            <div class="campo-senha-wrap"><input type="text" id="teep-admin-senha" required minlength="6" autocomplete="off" class="w-full p-2 border rounded-lg text-sm bg-white font-mono"><button type="button" class="btn-ver-senha" data-alvo="teep-admin-senha" aria-label="Mostrar senha" title="Mostrar senha"><span class="icon-olho-aberto" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="icon-olho-fechado" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span></button></div>
+          </div>
+          <button type="button" id="btn-gerar-senha-teep-admin" class="px-3 py-2 bg-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-300 shrink-0" title="Gerar outra senha">↻</button>
+        </div>
+      </div>
       <div id="teep-admin-role-wrap" class="hidden">
         <label class="block text-xs font-bold text-gray-500 mb-1">Papel</label>
         <select id="teep-admin-role" class="w-full p-2 border rounded-lg text-sm bg-white">
@@ -807,6 +819,12 @@ function exigirTrocaSenhaCliente() {
   document.getElementById('trocar-senha-email').innerText = currentUser.email || '';
   document.getElementById('form-trocar-senha')?.reset();
   document.getElementById('trocar-senha-erro')?.classList.add('hidden');
+  const btnTroca = document.getElementById('btn-submit-trocar-senha');
+  if (btnTroca) {
+    btnTroca.textContent = isTeepStaff()
+      ? 'Guardar e entrar no painel'
+      : 'Guardar e entrar no projeto';
+  }
   switchView('view-trocar-senha');
   initBotoesVerSenha();
 }
@@ -814,6 +832,10 @@ function exigirTrocaSenhaCliente() {
 function processarPerfilLogado(doc) {
   const udata = doc.data();
   userRole = udata.role;
+  if (udata.mustChangePassword) {
+    exigirTrocaSenhaCliente();
+    return;
+  }
   if (isTeepStaff()) {
     document.getElementById('admin-user-email').innerText = currentUser.email;
     const badge = document.getElementById('admin-role-badge');
@@ -830,10 +852,6 @@ function processarPerfilLogado(doc) {
   if (!udata.empresaId) {
     alert('Perfil sem empresa associada. Contacte o suporte Teep.');
     logout();
-    return;
-  }
-  if (udata.mustChangePassword) {
-    exigirTrocaSenhaCliente();
     return;
   }
   entrarClienteApp(udata);
@@ -921,7 +939,7 @@ document.getElementById('form-trocar-senha')?.addEventListener('submit', e => {
       errDiv.classList.remove('hidden');
     })
     .finally(() => {
-      if (btn) { btn.disabled = false; btn.textContent = 'Guardar e entrar no projeto'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Guardar e continuar'; }
     });
 });
 
@@ -1126,7 +1144,7 @@ function renderListaTeepStaff(docs) {
     return `<tr>
       <td class="p-3 text-sm">${escapeHtml(u.email || '')}</td>
       <td class="p-3 text-sm">${escapeHtml(u.nome || '—')}</td>
-      <td class="p-3 text-sm">${labelRoleUsuario(u.role)}</td>
+      <td class="p-3 text-sm">${labelRoleUsuario(u.role)}${u.mustChangePassword ? ' <span class="text-[10px] text-amber-600">· senha prov.</span>' : ''}</td>
       <td class="p-3 text-center">${acoes}</td>
     </tr>`;
   }).join('');
@@ -1172,6 +1190,7 @@ function abrirModalTeepAdmin() {
   document.getElementById('modalTeepAdmin')?.classList.add('active');
   const roleWrap = document.getElementById('teep-admin-role-wrap');
   if (roleWrap) roleWrap.classList.toggle('hidden', userRole !== 'superadmin');
+  configurarCampoSenhaProvisoria('teep-admin-senha-provisoria', 'teep-admin-senha', 'btn-gerar-senha-teep-admin');
 }
 function fecharModalTeepAdmin() {
   document.getElementById('modalTeepAdmin')?.classList.remove('active');
@@ -1185,6 +1204,7 @@ document.getElementById('form-teep-admin')?.addEventListener('submit', e => {
   const email = document.getElementById('teep-admin-email').value.trim();
   const nome = document.getElementById('teep-admin-nome').value.trim();
   const senha = document.getElementById('teep-admin-senha').value;
+  const senhaProvisoria = document.getElementById('teep-admin-senha-provisoria')?.checked !== false;
   let role = 'teep_admin';
   if (userRole === 'superadmin') {
     role = document.getElementById('teep-admin-role')?.value || 'teep_admin';
@@ -1194,9 +1214,16 @@ document.getElementById('form-teep-admin')?.addEventListener('submit', e => {
 
   secondAuth.createUserWithEmailAndPassword(email, senha)
     .then(res => db.collection('usuarios').doc(res.user.uid).set({
-      email, nome: nome || email, role, teepStaff: true
+      email, nome: nome || email, role, teepStaff: true,
+      mustChangePassword: senhaProvisoria
     }))
-    .then(() => { secondAuth.signOut(); fecharModalTeepAdmin(); })
+    .then(() => {
+      secondAuth.signOut();
+      fecharModalTeepAdmin();
+      if (senhaProvisoria) {
+        alert('Admin Teep criado.\n\nE-mail: ' + email + '\nSenha provisória: ' + senha + '\n\nNo primeiro login terá de definir uma nova senha pessoal.');
+      }
+    })
     .catch(err => alert('Erro ao criar admin Teep: ' + err.message))
     .finally(() => { if (btn) { btn.disabled = false; btn.textContent = 'Criar acesso'; } });
 });
@@ -1624,7 +1651,11 @@ function iniciarListenersProjeto() {
         <div class="flex justify-between items-center bg-gray-50 border p-3 rounded-xl shadow-sm">
           <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-full ${cBadge} flex items-center justify-center font-bold text-xs uppercase">${escapeHtml((p.nome || '').substring(0, 2))}</div>
-            <div><h4 class="text-xs font-bold text-gray-800 leading-tight">${escapeHtml(p.nome)}</h4><p class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(p.funcao)}</p></div>
+            <div>
+              <h4 class="text-xs font-bold text-gray-800 leading-tight">${escapeHtml(p.nome)}</h4>
+              <p class="text-[10px] text-gray-500 font-semibold mt-0.5">${escapeHtml(labelOrganizacaoProfissional(p.empresa))}</p>
+              <p class="text-[10px] text-gray-400">${escapeHtml(p.funcao)}</p>
+            </div>
           </div>
           ${btnDel}
         </div>`;
@@ -1903,7 +1934,7 @@ function renderCheckboxProfissionaisTarefa(selectedIds = []) {
     const checked = ids.has(p.id) ? 'checked' : '';
     return `<label class="flex items-center gap-2 p-1.5 rounded hover:bg-white cursor-pointer text-xs text-gray-700">
       <input type="checkbox" name="tar-prof-chk" value="${pid}" class="rounded border-gray-300 text-[#5C8374] focus:ring-[#5C8374]" ${checked}>
-      <span>${escapeHtml(p.nome)} <span class="text-gray-400">(${escapeHtml(p.empresa)})</span></span>
+      <span>${escapeHtml(p.nome)} <span class="text-gray-400">(${escapeHtml(labelOrganizacaoProfissional(p.empresa))})</span></span>
     </label>`;
   }).join('');
   box.innerHTML = header + items;
@@ -1967,6 +1998,16 @@ function toggleSetorOutroTarefa() {
 }
 
 // Operações de Cadastro e Exclusão no Projeto (Firestore Cloud)
+function labelOrganizacaoProfissional(empresa) {
+  const labels = {
+    Teep: 'Teep (Equipe Especializada)',
+    Cliente: 'Cliente (Equipe Interna)',
+    Outra: 'Outra / Terceirizada'
+  };
+  const k = (empresa || '').trim();
+  return labels[k] || k || '—';
+}
+
 function abrirModalProfissional() { document.getElementById('modalProfissional').classList.add('active'); }
 function fecharModalProfissional() { document.getElementById('modalProfissional').classList.remove('active'); document.getElementById('form-profissional').reset(); }
 document.getElementById('form-profissional').addEventListener('submit', e => {

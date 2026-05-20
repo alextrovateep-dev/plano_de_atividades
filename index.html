@@ -125,6 +125,7 @@
             <tr>
               <th class="p-3">Código</th>
               <th class="p-3">Nome da Empresa</th>
+              <th class="p-3">Contacto principal</th>
               <th class="p-3">Login principal</th>
               <th class="p-3 text-center">Ações de Gestão</th>
               <th class="p-3 text-center">Estado</th>
@@ -580,6 +581,7 @@ let cacheTarefas = [];
 // Ouvintes (Listeners) em Tempo Real
 let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null, unsubTeepStaff = null;
 let cacheEmpresasDocs = [];
+let cacheNomeContactoEmpresa = {};
 let unsubProfissionais = null, unsubTarefas = null, unsubEscopo = null;
 
 // Gestão de Visualização de Telas
@@ -715,20 +717,64 @@ function limparListenersProjeto() {
 /* ============================================================
    🏢 MÓDULO: PAINEL ADMINISTRATIVO TEEP (SUPERADMIN)
    ============================================================ */
+function nomeContactoEmpresa(emp, empresaId) {
+  if (empresaId && cacheNomeContactoEmpresa[empresaId]) return cacheNomeContactoEmpresa[empresaId];
+  const nu = String(emp.nomeUsuario || '').trim();
+  if (nu && !nu.includes('@')) return nu;
+  const c = String(emp.contato || '').trim();
+  if (c && !c.includes('@')) return c;
+  return '—';
+}
+
+function emailLoginEmpresa(emp) {
+  if (!emp) return '';
+  if (emp.emailAcesso) return emp.emailAcesso;
+  const n = String(emp.nomeUsuario || emp.contato || '').trim();
+  return n.includes('@') ? n : '';
+}
+
+async function enriquecerNomesContactoEmpresas() {
+  const updates = {};
+  for (const doc of cacheEmpresasDocs) {
+    const emp = doc.data();
+    const atual = nomeContactoEmpresa(emp);
+    if (atual !== '—') {
+      updates[doc.id] = atual;
+      continue;
+    }
+    try {
+      if (emp.adminUid) {
+        const found = await getUsuarioDoc(emp.adminUid);
+        if (found?.doc.data().nome) updates[doc.id] = found.doc.data().nome;
+      } else {
+        const email = emailLoginEmpresa(emp);
+        if (email) {
+          const q = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+          if (!q.empty && q.docs[0].data().nome) updates[doc.id] = q.docs[0].data().nome;
+        }
+      }
+    } catch (e) { console.warn('Nome contacto', doc.id, e); }
+  }
+  Object.assign(cacheNomeContactoEmpresa, updates);
+  if (Object.keys(updates).length) aplicarFiltroEmpresas();
+}
+
 function renderLinhaEmpresa(doc) {
   const emp = doc.data();
   const id = escapeHtml(doc.id);
   const nome = escapeHtml(emp.nome);
   const codigo = formatarCodigoEmpresa(emp.codigo);
   const codigoNum = emp.codigo != null ? Number(emp.codigo) : 'null';
-  const loginPrincipal = escapeHtml(emp.emailAcesso || (String(emp.nomeUsuario||'').includes('@') ? emp.nomeUsuario : '') || emp.nomeUsuario || emp.contato || '—');
+  const contacto = escapeHtml(nomeContactoEmpresa(emp, doc.id));
+  const loginPrincipal = escapeHtml(emailLoginEmpresa(emp) || '—');
   return `
         <tr class="hover:bg-gray-50">
           <td class="p-3 font-mono text-sm font-bold text-[#5C8374]">${codigo}</td>
           <td class="p-3 font-bold text-gray-800">${nome}</td>
+          <td class="p-3 text-gray-700 text-sm">${contacto}</td>
           <td class="p-3 text-gray-600 text-sm">${loginPrincipal}</td>
           <td class="p-3 text-center space-x-1">
-            <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)}, ${codigoNum})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200">Utilizadores</button>
+            <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)}, ${codigoNum})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200" title="Ver, editar e adicionar logins do projeto">Utilizadores</button>
             <button onclick="alternarEstadoEmpresa('${id}', ${!!emp.ativa})" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
           </td>
           <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${emp.ativa?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${emp.ativa?'Ativo':'Inativo'}</span></td>
@@ -745,11 +791,12 @@ function aplicarFiltroEmpresas() {
     const nome = String(emp.nome || '').toLowerCase();
     const cod = formatarCodigoEmpresa(emp.codigo).toLowerCase();
     const login = String(emp.emailAcesso || emp.nomeUsuario || emp.contato || '').toLowerCase();
-    return nome.includes(q) || cod.includes(q) || login.includes(q);
+    const contacto = String(nomeContactoEmpresa(emp, doc.id)).toLowerCase();
+    return nome.includes(q) || cod.includes(q) || login.includes(q) || contacto.includes(q);
   });
   tbody.innerHTML = filtrados.length
     ? filtrados.map(renderLinhaEmpresa).join('')
-    : '<tr><td colspan="6" class="p-6 text-center text-gray-400 italic">Nenhuma empresa corresponde ao filtro.</td></tr>';
+    : '<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Nenhuma empresa corresponde ao filtro.</td></tr>';
 }
 window.aplicarFiltroEmpresas = aplicarFiltroEmpresas;
 
@@ -818,6 +865,7 @@ function iniciarPainelAdmin() {
   unsubEmpresas = db.collection('empresas').orderBy('nome').onSnapshot(snap => {
     cacheEmpresasDocs = snap.docs;
     aplicarFiltroEmpresas();
+    enriquecerNomesContactoEmpresas();
   });
 }
 
@@ -941,13 +989,6 @@ let activeUserManageEmpresaId = null;
 let unsubUsuariosEmpresa = null;
 let usuarioEditId = null;
 let usuarioEditEmail = '';
-
-function emailLoginEmpresa(emp) {
-  if (!emp) return '';
-  if (emp.emailAcesso) return emp.emailAcesso;
-  const n = String(emp.nomeUsuario || emp.contato || '').trim();
-  return n.includes('@') ? n : '';
-}
 
 async function getUsuarioDoc(uid) {
   let doc = await db.collection('usuarios').doc(uid).get();

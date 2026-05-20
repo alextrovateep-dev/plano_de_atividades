@@ -761,7 +761,8 @@ async function enriquecerNomesContactoEmpresas() {
 
 function renderLinhaEmpresa(doc) {
   const emp = doc.data();
-  const id = escapeHtml(doc.id);
+  const id = escapeHtml(doc.id); // id Firestore (alfanumérico)
+  const idRaw = doc.id;
   const nome = escapeHtml(emp.nome);
   const codigo = formatarCodigoEmpresa(emp.codigo);
   const codigoNum = emp.codigo != null ? Number(emp.codigo) : 'null';
@@ -774,11 +775,11 @@ function renderLinhaEmpresa(doc) {
           <td class="p-3 text-gray-700 text-sm">${contacto}</td>
           <td class="p-3 text-gray-600 text-sm">${loginPrincipal}</td>
           <td class="p-3 text-center space-x-1">
-            <button onclick="gerenciarUsuarios('${id}', ${JSON.stringify(emp.nome)}, ${codigoNum})" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200" title="Ver, editar e adicionar logins do projeto">Utilizadores</button>
-            <button onclick="alternarEstadoEmpresa('${id}', ${!!emp.ativa})" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
+            <button type="button" data-acao-empresa="usuarios" data-empresa-id="${idRaw}" class="px-2.5 py-1 bg-gray-100 border text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-200" title="Ver, editar e adicionar logins do projeto">Utilizadores</button>
+            <button type="button" data-acao-empresa="toggle-ativa" data-empresa-id="${idRaw}" data-ativa="${emp.ativa ? '1' : '0'}" class="px-2.5 py-1 ${emp.ativa?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700 border-emerald-200'} border text-xs font-semibold rounded-md hover:opacity-80">${emp.ativa?'Desativar':'Ativar'}</button>
           </td>
           <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${emp.ativa?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${emp.ativa?'Ativo':'Inativo'}</span></td>
-          <td class="p-3 text-right"><button onclick="entrarComoAdminNaEmpresa('${id}')" class="text-green-600 hover:text-green-800 font-bold text-sm">Acessar →</button></td>
+          <td class="p-3 text-right"><button type="button" data-acao-empresa="acessar" data-empresa-id="${idRaw}" class="text-green-600 hover:text-green-800 font-bold text-sm">Acessar →</button></td>
         </tr>`;
 }
 
@@ -799,6 +800,27 @@ function aplicarFiltroEmpresas() {
     : '<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Nenhuma empresa corresponde ao filtro.</td></tr>';
 }
 window.aplicarFiltroEmpresas = aplicarFiltroEmpresas;
+
+function empresaDocPorId(empresaId) {
+  return cacheEmpresasDocs.find(d => d.id === empresaId);
+}
+
+document.getElementById('lista-empresas')?.addEventListener('click', e => {
+  const btn = e.target.closest('[data-acao-empresa]');
+  if (!btn) return;
+  const empresaId = btn.getAttribute('data-empresa-id');
+  if (!empresaId) return;
+  const doc = empresaDocPorId(empresaId);
+  const emp = doc ? doc.data() : {};
+  const acao = btn.getAttribute('data-acao-empresa');
+  if (acao === 'usuarios') {
+    gerenciarUsuarios(empresaId, emp.nome || '', emp.codigo);
+  } else if (acao === 'toggle-ativa') {
+    alternarEstadoEmpresa(empresaId, btn.getAttribute('data-ativa') === '1');
+  } else if (acao === 'acessar') {
+    entrarComoAdminNaEmpresa(empresaId);
+  }
+});
 
 function renderListaTeepStaff(docs) {
   const tbody = document.getElementById('lista-teep-staff');

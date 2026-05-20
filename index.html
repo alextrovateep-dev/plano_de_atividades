@@ -247,8 +247,7 @@
         <div class="bg-gray-50 p-4 rounded-xl border flex flex-col justify-between">
           <div class="space-y-2">
             <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Resumo Estratégico</h4>
-            <div class="grid grid-cols-2 gap-4 pt-2">
-              <div class="bg-white p-3 rounded-lg border"><span class="text-[11px] text-gray-400 font-bold block">COLETORES (TERMINAIS)</span><span id="totalMaquinas" class="text-2xl font-black text-gray-800">0</span></div>
+            <div class="pt-2">
               <div class="bg-white p-3 rounded-lg border border-green-100 bg-green-50/10"><span class="text-[11px] text-green-600 font-bold block">CARGA HORÁRIA TOTAL</span><span id="totalHoras" class="text-2xl font-black text-green-700">0h</span></div>
             </div>
           </div>
@@ -1678,7 +1677,7 @@ function renderEscopoDinamicamente(dados) {
   cacheEscopo = dados;
   atualizarSelectUnidadesTarefa();
 
-  let ac=0, tm=0, th=0;
+  let ac=0, th=0;
   const tabela = document.getElementById('tabela');
   const thAcaoEscopo = document.getElementById('th-acao-escopo');
   const podeEditar = podeEditarProjeto();
@@ -1692,13 +1691,11 @@ function renderEscopoDinamicamente(dados) {
 
   if (dados.length === 0) {
     tabela.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">Nenhum item cadastrado no escopo da implantação.</td></tr>`;
-    document.getElementById('totalMaquinas').innerText = 0;
     document.getElementById('totalHoras').innerText = '0h';
     return;
   }
 
   th = dados.reduce((s, d) => s + horasEscopo(d), 0);
-  tm = dados.reduce((s, d) => s + (tipoEscopo(d) === 'terminal' ? (Number(d.maquinas) || 0) : 0), 0);
 
   dados.forEach(d => {
     const h = horasEscopo(d);
@@ -1723,7 +1720,6 @@ function renderEscopoDinamicamente(dados) {
       </tr>`;
   });
   
-  document.getElementById('totalMaquinas').innerText = tm;
   document.getElementById('totalHoras').innerText = th + 'h';
 }
 

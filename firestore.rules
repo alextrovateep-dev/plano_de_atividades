@@ -56,16 +56,19 @@ service cloud.firestore {
 
     // Coleção única de perfis (legado "users" só leitura/remoção durante migração)
     match /usuarios/{userId} {
-      allow read: if isSignedIn() && hasProfile()
-        && (request.auth.uid == userId || isTeepStaff());
+      // O próprio utilizador pode ler o perfil (login); staff Teep lê outros
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || isTeepStaff()
+      );
       allow create: if isTeepStaff()
         && (request.resource.data.role != 'superadmin' || isSuperAdmin());
       allow update, delete: if canManageUsuario(userId);
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && hasProfile()
-        && (request.auth.uid == userId || isTeepStaff());
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || isTeepStaff()
+      );
       allow delete: if isTeepStaff();
       allow create, update: if isTeepStaff();
     }

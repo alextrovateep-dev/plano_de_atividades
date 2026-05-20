@@ -24,6 +24,54 @@
   .btn-ver-senha .icon-olho-fechado{display:none}
   .btn-ver-senha.senha-visivel .icon-olho-aberto{display:none}
   .btn-ver-senha.senha-visivel .icon-olho-fechado{display:block}
+
+  /* Plano de atividades — layout profissional */
+  .plano-app{background:linear-gradient(180deg,#f0f4f2 0%,#eef1f5 48%,#f4f6f8 100%)}
+  .plano-header{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid #e8ecef;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+  .plano-main{padding:1.5rem 1.75rem 2.5rem}
+  .plano-card{background:#fff;border-radius:1rem;box-shadow:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.04);border:1px solid rgba(226,232,240,.8);overflow:hidden}
+  .plano-card-body{padding:1.25rem 1.5rem 1.5rem}
+  .plano-section-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1.25rem 1.5rem;background:linear-gradient(180deg,#fafbfc 0%,#fff 100%);border-bottom:1px solid #f1f5f9}
+  .plano-section-title{font-size:1.05rem;font-weight:700;color:#1e293b;letter-spacing:-.02em}
+  .plano-section-desc{font-size:.75rem;color:#64748b;margin-top:.2rem;line-height:1.45}
+  .plano-section-num{display:inline-flex;align-items:center;justify-content:center;width:1.65rem;height:1.65rem;border-radius:.5rem;background:#5C8374;color:#fff;font-size:.7rem;font-weight:800;margin-right:.5rem;vertical-align:middle}
+  .btn-plano{display:inline-flex;align-items:center;gap:.35rem;padding:.5rem 1rem;border-radius:.625rem;font-size:.75rem;font-weight:700;transition:all .15s;border:none;cursor:pointer}
+  .btn-plano-dark{background:#334155;color:#fff;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+  .btn-plano-dark:hover{background:#1e293b}
+  .btn-plano-brand{background:#5C8374;color:#fff;box-shadow:0 1px 2px rgba(92,131,116,.25)}
+  .btn-plano-brand:hover{background:#4a6b5d}
+  .btn-plano-ghost{background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
+  .btn-plano-ghost:hover{background:#f1f5f9}
+  .plano-empty{text-align:center;padding:2rem 1rem;color:#94a3b8;font-size:.875rem;font-style:italic}
+  .plano-table-wrap{border-radius:.75rem;background:#fafbfc;overflow:hidden}
+  .plano-table{width:100%;text-align:left;font-size:.8125rem;border-collapse:separate;border-spacing:0}
+  .plano-table thead th{padding:.65rem 1rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;background:#f1f5f9;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+  .plano-table tbody td{padding:.7rem 1rem;color:#334155;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  .plano-table tbody tr:last-child td{border-bottom:none}
+  .plano-table tbody tr:hover td{background:#f8fafc}
+  .plano-table tbody tr.plano-row-alt td{background:#fafbfc}
+  .plano-table .cell-mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace;font-size:.75rem;color:#64748b}
+  .plano-table .cell-num{text-align:center;font-weight:600;color:#5C8374}
+  .plano-table .cell-actions{text-align:center;white-space:nowrap}
+  .plano-resumo{background:linear-gradient(145deg,#f8faf9 0%,#f1f5f4 100%);border-radius:.875rem;padding:1.25rem;border:1px solid #e2ebe8}
+  .plano-kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
+  @media(min-width:640px){.plano-kpi-grid{grid-template-columns:repeat(4,1fr)}}
+  .plano-kpi{background:#fff;border-radius:.625rem;padding:.85rem 1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .plano-kpi-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;line-height:1.3}
+  .plano-kpi-value{font-size:1.5rem;font-weight:800;margin-top:.35rem;line-height:1;color:#1e293b}
+  .plano-kpi-value.brand{color:#5C8374}
+  .plano-kpi-value.green{color:#15803d}
+  .plano-kpi.kpi-total{background:linear-gradient(135deg,#5C8374 0%,#4a6b5d 100%)}
+  .plano-kpi.kpi-total .plano-kpi-label{color:rgba(255,255,255,.85)}
+  .plano-kpi.kpi-total .plano-kpi-value{color:#fff}
+  .plano-kpi-foot{margin-top:1rem;padding-top:.85rem;border-top:1px solid #e2ebe8;font-size:.68rem;color:#94a3b8;line-height:1.5}
+  .prof-card{background:#fff;border-radius:.75rem;padding:1rem 1.1rem;box-shadow:0 1px 2px rgba(15,23,42,.05);border:1px solid #f1f5f9;transition:box-shadow .15s,border-color .15s;height:100%}
+  .prof-card:hover{box-shadow:0 4px 12px rgba(15,23,42,.08);border-color:#e2e8f0}
+  .prof-avatar{width:2.5rem;height:2.5rem;border-radius:.625rem;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0}
+  .prof-avatar.teep{background:#dcfce7;color:#166534}
+  .prof-avatar.cliente{background:#ffedd5;color:#c2410c}
+  .prof-avatar.outro{background:#e0e7ff;color:#3730a3}
+  .status-pill{display:inline-block;padding:.2rem .55rem;border-radius:9999px;font-size:.65rem;font-weight:700}
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -209,9 +257,9 @@
   </main>
 </div>
 
-<div id="view-empresa" class="view min-h-screen flex flex-col">
-  <header class="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
-    <div class="flex items-center gap-4 min-w-0">
+<div id="view-empresa" class="view plano-app min-h-screen flex flex-col">
+  <header class="plano-header px-5 sm:px-8 py-3.5 flex justify-between items-center gap-4">
+    <div class="flex items-center gap-3 sm:gap-4 min-w-0">
       <img
         src="https://teep.com.br/wp-content/uploads/2023/11/cropped-cropped-teep-logo-menor-300x87.png"
         alt="Teep"
@@ -219,115 +267,116 @@
         height="35"
         class="h-8 w-auto shrink-0 object-contain hidden sm:block"
       >
-      <button id="btn-voltar-admin" onclick="voltarParaAdmin()" class="hidden text-xs font-bold text-gray-500 hover:text-gray-800 bg-gray-100 px-3 py-2 rounded-lg border transition shrink-0">← Voltar</button>
-      <div class="min-w-0">
-        <h1 id="nome-empresa-titulo" class="text-lg sm:text-xl font-extrabold text-gray-800 tracking-tight truncate">Carregando...</h1>
-        <p class="text-xs text-gray-500 font-medium">Plano de Implantação TeepOEE</p>
+      <button id="btn-voltar-admin" onclick="voltarParaAdmin()" class="hidden btn-plano btn-plano-ghost shrink-0">← Voltar</button>
+      <div class="min-w-0 border-l border-slate-200 pl-3 sm:pl-4">
+        <h1 id="nome-empresa-titulo" class="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate">Carregando...</h1>
+        <p class="text-[11px] text-slate-500 mt-0.5">Plano de atividades · TeepOEE</p>
       </div>
     </div>
-    <div class="flex items-center gap-4">
-      <span id="empresa-user-email" class="text-sm text-gray-600 font-medium bg-gray-50 px-3 py-1.5 rounded-lg border"></span>
-      <button onclick="logout()" class="text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 transition">Sair</button>
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+      <span id="empresa-user-email" class="hidden sm:inline text-xs text-slate-600 font-medium max-w-[12rem] truncate"></span>
+      <button type="button" onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-700 px-3 py-2 rounded-lg hover:bg-red-50 transition">Sair</button>
     </div>
   </header>
 
-  <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-8">
+  <main class="plano-main flex-1 max-w-7xl w-full mx-auto space-y-6">
     
-    <section class="bg-white p-5 rounded-xl border shadow-sm space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <div>
-          <h2 class="text-lg font-bold text-gray-800">1. Engenharia e Equipe de Projeto</h2>
-          <p class="text-xs text-gray-400">Responsáveis alocados para a execução da implantação</p>
+    <section class="plano-card">
+      <div class="plano-section-head">
+        <div class="min-w-0">
+          <h2 class="plano-section-title"><span class="plano-section-num">1</span>Engenharia e equipe</h2>
+          <p class="plano-section-desc">Profissionais alocados à execução da implantação</p>
         </div>
-        <button id="btn-add-profissional" onclick="abrirModalProfissional()" class="hidden px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-700 transition">+ Alocar Profissional</button>
+        <button type="button" id="btn-add-profissional" onclick="abrirModalProfissional()" class="hidden btn-plano btn-plano-dark">+ Alocar profissional</button>
       </div>
-      <div id="lista-profissionais" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
-      <p id="semProfissionais" class="text-sm text-gray-400 italic text-center py-2 hidden">Nenhum profissional alocado neste projeto.</p>
+      <div class="plano-card-body">
+        <div id="lista-profissionais" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        <p id="semProfissionais" class="plano-empty hidden">Nenhum profissional alocado neste projeto.</p>
+      </div>
     </section>
 
-    <section class="bg-white p-5 rounded-xl border shadow-sm space-y-6">
-      <div class="flex justify-between items-center border-b pb-3">
-        <div>
-          <h2 class="text-lg font-bold text-gray-800">2. Escopo e Dimensionamento da Implantação</h2>
-          <p class="text-xs text-gray-400">Orçamento de esforço por setor e tarefa (horas totais). O cronograma abaixo define <strong>quando</strong> cada atividade ocorre.</p>
+    <section class="plano-card">
+      <div class="plano-section-head">
+        <div class="min-w-0 max-w-2xl">
+          <h2 class="plano-section-title"><span class="plano-section-num">2</span>Escopo e dimensionamento</h2>
+          <p class="plano-section-desc">Esforço por setor e tarefa (horas). O cronograma define <strong class="text-slate-600 font-semibold">quando</strong> cada atividade ocorre.</p>
         </div>
-        <button id="btn-add-escopo" onclick="abrirModalEscopo()" class="hidden px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-700 transition">+ Item de Escopo</button>
+        <button type="button" id="btn-add-escopo" onclick="abrirModalEscopo()" class="hidden btn-plano btn-plano-dark shrink-0">+ Item de escopo</button>
       </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,42%)] gap-6 items-stretch">
-        <div class="overflow-x-auto border rounded-xl min-w-0">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b">
-              <tr>
-                <th class="p-2 border-r text-center w-16">Sequência</th>
-                <th class="p-2 border-r">Setor</th>
-                <th class="p-2 border-r">Tarefa</th>
-                <th class="p-2 border-r text-center w-16">Horas</th>
-                <th id="th-acao-escopo" class="p-2 text-center w-24 hidden">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="tabela" class="divide-y text-gray-700 font-mono text-xs"></tbody>
-          </table>
-        </div>
-        <div class="bg-gray-50 p-5 rounded-xl border flex flex-col justify-between min-w-0 w-full">
-          <div class="space-y-3 w-full">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Resumo</h4>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 w-full">
-              <div class="bg-white p-3 rounded-lg border min-w-0 flex flex-col justify-center">
-                <span class="text-[10px] text-gray-500 font-bold block leading-tight">Recursos</span>
-                <span id="totalRecursos" class="text-2xl font-black text-gray-800 mt-1">0</span>
-              </div>
-              <div class="bg-white p-3 rounded-lg border border-green-100 bg-green-50/10 min-w-0 flex flex-col justify-center">
-                <span class="text-[10px] text-green-700 font-bold block leading-tight">Hr implantação recurso</span>
-                <span id="totalHorasTerminais" class="text-2xl font-black text-green-700 mt-1">0h</span>
-              </div>
-              <div class="bg-white p-3 rounded-lg border border-gray-200 bg-gray-50/50 min-w-0 flex flex-col justify-center">
-                <span class="text-[10px] text-gray-600 font-bold block leading-tight">Horas outras tarefas</span>
-                <span id="totalHorasOutros" class="text-2xl font-black text-gray-800 mt-1">0h</span>
-              </div>
-              <div class="bg-white p-3 rounded-lg border border-[#5C8374]/30 bg-[#5C8374]/5 min-w-0 flex flex-col justify-center">
-                <span class="text-[10px] text-[#5C8374] font-bold block leading-tight">Total</span>
-                <span id="totalHorasGeral" class="text-2xl font-black text-[#5C8374] mt-1">0h</span>
+      <div class="plano-card-body">
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,40%)] gap-5 items-stretch">
+          <div class="plano-table-wrap overflow-x-auto min-w-0">
+            <table class="plano-table">
+              <thead>
+                <tr>
+                  <th class="cell-num">Seq.</th>
+                  <th>Setor</th>
+                  <th>Tarefa</th>
+                  <th class="cell-num">Horas</th>
+                  <th id="th-acao-escopo" class="cell-actions hidden">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="tabela"></tbody>
+            </table>
+          </div>
+          <aside class="plano-resumo flex flex-col justify-between min-w-0">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3">Resumo</p>
+              <div class="plano-kpi-grid">
+                <div class="plano-kpi">
+                  <div class="plano-kpi-label">Recursos</div>
+                  <div id="totalRecursos" class="plano-kpi-value">0</div>
+                </div>
+                <div class="plano-kpi">
+                  <div class="plano-kpi-label">Hr implantação</div>
+                  <div id="totalHorasTerminais" class="plano-kpi-value green">0h</div>
+                </div>
+                <div class="plano-kpi">
+                  <div class="plano-kpi-label">Outras tarefas</div>
+                  <div id="totalHorasOutros" class="plano-kpi-value">0h</div>
+                </div>
+                <div class="plano-kpi kpi-total">
+                  <div class="plano-kpi-label">Total horas</div>
+                  <div id="totalHorasGeral" class="plano-kpi-value">0h</div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="text-[11px] text-gray-400 leading-relaxed pt-4 border-t mt-4">
-            * Terminais: horas pela matriz Teep (coletores). Outros setores (TI, elétrica, etc.): horas estimadas por tarefa. O cronograma regista o período de execução.
-          </div>
+            <p class="plano-kpi-foot">Terminais: matriz Teep. Demais setores: horas estimadas. O cronograma regista o período de execução.</p>
+          </aside>
         </div>
       </div>
-
     </section>
 
-    <section class="bg-white p-5 rounded-xl border shadow-sm space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <div>
-          <h2 class="text-lg font-bold text-gray-800">3. Cronograma Executivo de Atividades</h2>
-          <p class="text-xs text-gray-400">Quando cada atividade ocorre (início e fim). O esforço em horas está na secção 2.</p>
+    <section class="plano-card">
+      <div class="plano-section-head">
+        <div class="min-w-0">
+          <h2 class="plano-section-title"><span class="plano-section-num">3</span>Cronograma de atividades</h2>
+          <p class="plano-section-desc">Datas de início e fim de cada atividade</p>
         </div>
-        <button id="btn-add-tarefa" onclick="abrirModalTarefa()" class="hidden px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-green-700 transition">+ Nova Atividade</button>
+        <button type="button" id="btn-add-tarefa" onclick="abrirModalTarefa()" class="hidden btn-plano btn-plano-brand shrink-0">+ Nova atividade</button>
       </div>
-
-      <div class="overflow-x-auto border rounded-xl">
-        <table class="w-full text-left text-sm border-collapse">
-          <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b">
-            <tr>
-              <th class="p-2 border-r text-center w-12">Nº</th>
-              <th class="p-2 border-r">Atividade</th>
-              <th class="p-2 border-r w-32">Obs</th>
-              <th class="p-2 border-r w-36">Unidade / Setor</th>
-              <th class="p-2 border-r w-32">Responsável</th>
-              <th class="p-2 border-r w-40">Profissional Alocado</th>
-              <th class="p-2 border-r text-center w-28">Início</th>
-              <th class="p-2 border-r text-center w-28">Previsão Fim</th>
-              <th class="p-2 border-r text-center w-36">Estado</th>
-              <th id="th-acao-tarefa" class="p-2 text-center w-28 hidden">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaTarefas" class="divide-y text-gray-700 text-xs"></tbody>
-        </table>
+      <div class="plano-card-body pt-0 px-0 pb-0">
+        <div class="plano-table-wrap overflow-x-auto rounded-b-2xl">
+          <table class="plano-table">
+            <thead>
+              <tr>
+                <th class="cell-num">Nº</th>
+                <th>Atividade</th>
+                <th>Obs</th>
+                <th>Setor</th>
+                <th>Responsável</th>
+                <th>Profissional</th>
+                <th class="cell-num">Início</th>
+                <th class="cell-num">Fim</th>
+                <th class="cell-num">Estado</th>
+                <th id="th-acao-tarefa" class="cell-actions hidden">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaTarefas"></tbody>
+          </table>
+        </div>
+        <p id="semTarefas" class="plano-empty hidden">Nenhuma atividade no cronograma.</p>
       </div>
-      <p id="semTarefas" class="text-sm text-gray-400 italic text-center py-4 hidden">Nenhuma atividade cadastrada no cronograma.</p>
     </section>
 
   </main>
@@ -1897,25 +1946,23 @@ function iniciarListenersProjeto() {
     aviso.classList.toggle('hidden', cacheProfissionais.length > 0);
 
     cacheProfissionais.forEach(p => {
-      let cBadge = "bg-blue-100 text-blue-700";
-      if (p.empresa === 'Teep') cBadge = "bg-green-100 text-green-700 border border-green-200";
-      else if (p.empresa === 'Cliente') cBadge = "bg-orange-100 text-orange-700";
+      let avCls = 'prof-avatar outro';
+      if (p.empresa === 'Teep') avCls = 'prof-avatar teep';
+      else if (p.empresa === 'Cliente') avCls = 'prof-avatar cliente';
 
       const btnDel = (isTeepStaff() || (userRole === 'admin' && p.empresa !== 'Teep')) 
-        ? `<button onclick="excluirProfissional('${escapeHtml(p.id)}')" class="text-gray-300 hover:text-red-500 font-bold transition">×</button>` : '';
+        ? `<button type="button" onclick="excluirProfissional('${escapeHtml(p.id)}')" class="text-slate-300 hover:text-red-500 text-lg leading-none p-1" title="Remover">×</button>` : '';
 
       list.innerHTML += `
-        <div class="flex justify-between items-center bg-gray-50 border p-3 rounded-xl shadow-sm">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full ${cBadge} flex items-center justify-center font-bold text-xs uppercase">${escapeHtml((p.nome || '').substring(0, 2))}</div>
-            <div>
-              <h4 class="text-xs font-bold text-gray-800 leading-tight">${escapeHtml(p.nome)}</h4>
-              <p class="text-[10px] text-gray-500 font-semibold mt-0.5">${escapeHtml(labelOrganizacaoProfissional(p.empresa))}</p>
-              <p class="text-[10px] text-gray-400">${escapeHtml(p.funcao)}</p>
-            </div>
+        <article class="prof-card flex gap-3">
+          <div class="${avCls}">${escapeHtml((p.nome || '').substring(0, 2))}</div>
+          <div class="min-w-0 flex-1">
+            <h4 class="text-sm font-bold text-slate-800 truncate">${escapeHtml(p.nome)}</h4>
+            <p class="text-[11px] text-[#5C8374] font-semibold mt-0.5 truncate">${escapeHtml(labelOrganizacaoProfissional(p.empresa))}</p>
+            <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${escapeHtml(p.funcao)}</p>
           </div>
-          ${btnDel}
-        </div>`;
+          ${btnDel ? `<div class="shrink-0">${btnDel}</div>` : ''}
+        </article>`;
     });
     atualizarSelectProfissionais();
   });
@@ -2021,28 +2068,29 @@ function renderEscopoDinamicamente(dados) {
   }
 
   if (dados.length === 0) {
-    tabela.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 italic">Nenhum item cadastrado no escopo da implantação.</td></tr>`;
+    tabela.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-8 italic text-sm">Nenhum item no escopo.</td></tr>`;
     atualizarResumoEscopo([]);
     return;
   }
 
-  dados.forEach(d => {
+  dados.forEach((d, i) => {
     const h = horasEscopo(d);
     const eid = escapeHtml(d.id);
     const setor = escapeHtml(labelSetorEscopo(d));
     const tarefa = escapeHtml(labelTarefaEscopo(d));
+    const rowCls = i % 2 ? 'plano-row-alt' : '';
     const tdAcaoEscopo = podeEditar ? `
-      <td class="p-2 text-center whitespace-nowrap">
-        <button type="button" onclick="editarUnidadeEscopo('${eid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
-        <button type="button" onclick="excluirUnidadeEscopo('${eid}')" class="text-red-500 hover:text-red-700 font-bold">×</button>
+      <td class="cell-actions">
+        <button type="button" onclick="editarUnidadeEscopo('${eid}')" class="text-[#5C8374] hover:underline text-xs font-semibold mr-2">Editar</button>
+        <button type="button" onclick="excluirUnidadeEscopo('${eid}')" class="text-red-500 hover:text-red-600 text-sm font-bold">×</button>
       </td>` : '';
 
     tabela.innerHTML += `
-      <tr class="hover:bg-gray-50">
-        <td class="p-2 border-r text-center">${formatarOrdemEscopo(d.ordem)}</td>
-        <td class="p-2 border-r">${setor}</td>
-        <td class="p-2 border-r text-gray-600">${tarefa}</td>
-        <td class="p-2 border-r text-center font-semibold">${h}h</td>
+      <tr class="${rowCls}">
+        <td class="cell-num cell-mono">${formatarOrdemEscopo(d.ordem)}</td>
+        <td class="font-medium text-slate-700">${setor}</td>
+        <td class="text-slate-600">${tarefa}</td>
+        <td class="cell-num font-semibold text-[#5C8374]">${h}h</td>
         ${tdAcaoEscopo}
       </tr>`;
   });
@@ -2066,37 +2114,31 @@ function renderTarefas(tarefas) {
 
   tarefas.forEach((t, i) => {
     const st = statusEfetivoTarefa(t);
-    let corFundoLinha = '';
-    if (st === 'andamento') {
-      corFundoLinha = 'bg-green-50/70 hover:bg-green-100/50 transition-colors';
-    } else if (st === 'concluido') {
-      corFundoLinha = 'bg-green-100/80 hover:bg-green-200/50 transition-colors font-medium';
-    } else if (st === 'atrasado') {
-      corFundoLinha = 'bg-amber-50 hover:bg-amber-100/70 transition-colors';
-    } else {
-      corFundoLinha = i % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-    }
+    let rowCls = i % 2 ? 'plano-row-alt' : '';
+    if (st === 'andamento') rowCls += ' !bg-emerald-50/80';
+    else if (st === 'concluido') rowCls += ' !bg-emerald-100/60';
+    else if (st === 'atrasado') rowCls += ' !bg-amber-50/90';
 
     const tid = escapeHtml(t.id);
     const selectDisabled = podeEditarTotal ? '' : 'disabled';
-    const tdAcao = podeEditarTotal ? `<td class="p-2 text-center whitespace-nowrap">
-        <button type="button" onclick="editarTarefa('${tid}')" class="text-[#5C8374] hover:underline text-[10px] font-bold mr-2">Editar</button>
-        <button type="button" onclick="excluirTarefa('${tid}')" class="text-red-500 hover:text-red-700 font-bold">×</button>
+    const tdAcao = podeEditarTotal ? `<td class="cell-actions">
+        <button type="button" onclick="editarTarefa('${tid}')" class="text-[#5C8374] hover:underline text-xs font-semibold mr-2">Editar</button>
+        <button type="button" onclick="excluirTarefa('${tid}')" class="text-red-500 hover:text-red-600 text-sm font-bold">×</button>
       </td>` : '';
 
     tbody.innerHTML += `
-      <tr class="${corFundoLinha} border-b">
-        <td class="p-2 border-r text-center text-gray-400 font-mono text-[11px]">${i+1}</td>
-        <td class="p-2 border-r font-medium text-gray-800">${escapeHtml(t.nome)}</td>
-        <td class="p-2 border-r text-gray-500 text-[11px] max-w-[10rem]"><span class="line-clamp-3" title="${escapeHtml(t.observacao || '')}">${t.observacao ? escapeHtml(t.observacao) : '\u2014'}</span></td>
-        <td class="p-2 border-r text-gray-600 text-[11px]">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
-        <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${badgeEmpresaResponsavel(t.empresa)}">${escapeHtml(t.empresa)}</span></td>
-        <td class="p-2 border-r text-gray-600 text-[11px] leading-relaxed">${htmlProfissionaisTarefa(t)}</td>
-        <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.inicio)}</td>
-        <td class="p-2 border-r text-center text-gray-500 font-mono">${fmt(t.fim)}</td>
-        <td class="p-2 border-r text-center">
+      <tr class="${rowCls}">
+        <td class="cell-num cell-mono text-slate-400">${i+1}</td>
+        <td class="font-semibold text-slate-800">${escapeHtml(t.nome)}</td>
+        <td class="text-slate-500 text-xs max-w-[9rem]"><span class="line-clamp-2" title="${escapeHtml(t.observacao || '')}">${t.observacao ? escapeHtml(t.observacao) : '\u2014'}</span></td>
+        <td class="text-slate-600 text-xs">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
+        <td class="text-center"><span class="status-pill ${badgeEmpresaResponsavel(t.empresa)}">${escapeHtml(t.empresa)}</span></td>
+        <td class="text-slate-600 text-xs leading-snug">${htmlProfissionaisTarefa(t)}</td>
+        <td class="cell-num cell-mono">${fmt(t.inicio)}</td>
+        <td class="cell-num cell-mono">${fmt(t.fim)}</td>
+        <td class="cell-num">
           <select onchange="alterarStatus('${tid}', this.value)" ${selectDisabled}
-            class="text-xs border rounded-lg px-2 py-1 bg-white font-semibold shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 cursor-pointer disabled:opacity-90 disabled:cursor-default">
+            class="text-xs border-0 bg-slate-100 rounded-md px-2 py-1.5 font-semibold text-slate-700 focus:ring-2 focus:ring-[#5C8374] cursor-pointer disabled:opacity-80 max-w-full">
             ${['pendente', 'andamento', 'concluido', 'atrasado'].map(s =>
               `<option value="${s}" ${st === s ? 'selected' : ''}>${statusLabel[s]}</option>`
             ).join('')}
@@ -2121,7 +2163,7 @@ function alterarStatus(id, nv) {
 
 // Atualização Dinâmica do Formulário de Vinculação de Atividades
 function badgeEmpresaResponsavel(empresa) {
-  if (empresa === 'Teep') return 'bg-gray-200 text-gray-800';
+  if (empresa === 'Teep') return 'bg-slate-200 text-slate-700';
   if (empresa === 'Ambos') return 'bg-emerald-100 text-emerald-800';
   return 'bg-orange-100 text-orange-800';
 }

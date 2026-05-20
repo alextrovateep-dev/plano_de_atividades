@@ -54,6 +54,15 @@ service cloud.firestore {
         && (isSuperAdmin() || targetUsuarioRole(userId) != 'superadmin');
     }
 
+    function isSelfPasswordDoneUpdate(userId) {
+      return request.auth.uid == userId
+        && resource.data.mustChangePassword == true
+        && request.resource.data.mustChangePassword == false
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.empresaId == resource.data.empresaId;
+    }
+
     // Coleção única de perfis (legado "users" só leitura/remoção durante migração)
     match /usuarios/{userId} {
       // O próprio utilizador pode ler o perfil (login); staff Teep lê outros
@@ -62,7 +71,8 @@ service cloud.firestore {
       );
       allow create: if isTeepStaff()
         && (request.resource.data.role != 'superadmin' || isSuperAdmin());
-      allow update, delete: if canManageUsuario(userId);
+      allow update: if canManageUsuario(userId) || isSelfPasswordDoneUpdate(userId);
+      allow delete: if canManageUsuario(userId);
     }
 
     match /users/{userId} {

@@ -233,7 +233,7 @@
           <table class="w-full text-left text-sm">
             <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b">
               <tr>
-                <th class="p-2 border-r text-center w-14">Sequência</th>
+                <th class="p-2 border-r text-center w-16">Sequência</th>
                 <th class="p-2 border-r">Setor</th>
                 <th class="p-2 border-r">Tarefa</th>
                 <th class="p-2 border-r text-center w-16">Horas</th>
@@ -486,7 +486,11 @@
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
     <h3 id="modal-escopo-titulo" class="text-lg font-bold text-gray-800">Adicionar item ao escopo</h3>
     <form id="form-escopo" class="space-y-3">
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Sequência</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Sequência</label>
+        <input type="number" id="escopo-ordem" required min="0.01" step="0.01" class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1, 1.1, 1.2">
+        <p class="text-[10px] text-gray-400 mt-1">Use decimais para sub-tarefas entre dois números inteiros (ex.: 1, 1.1, 1.2 … 2).</p>
+      </div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Unidade operacional / Setor</label><input type="text" id="escopo-setor" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Produção, TI, Elétrica"></div>
       <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Tipo de dimensionamento</label>
@@ -1643,6 +1647,19 @@ function iniciarListenersProjeto() {
 
 // LÓGICA DINÂMICA DE ESCOPO
 
+function parseOrdemEscopoInput(val) {
+  const n = parseFloat(String(val).trim().replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
+function formatarOrdemEscopo(ordem) {
+  const n = Number(ordem);
+  if (!Number.isFinite(n)) return '—';
+  const r = Math.round(n * 100) / 100;
+  return Number.isInteger(r) ? String(r) : String(r);
+}
+
 function labelSetorEscopo(d) { return (d.setor || d.unidade || '').trim(); }
 function labelTarefaEscopo(d) {
   if (d.tarefa) return d.tarefa;
@@ -1734,7 +1751,7 @@ function renderEscopoDinamicamente(dados) {
 
     tabela.innerHTML += `
       <tr class="hover:bg-gray-50">
-        <td class="p-2 border-r text-center">${d.ordem}</td>
+        <td class="p-2 border-r text-center">${formatarOrdemEscopo(d.ordem)}</td>
         <td class="p-2 border-r">${setor}</td>
         <td class="p-2 border-r text-gray-600">${tarefa}</td>
         <td class="p-2 border-r text-center font-semibold">${h}h</td>
@@ -1935,7 +1952,7 @@ function atualizarSelectUnidadesTarefa() {
   const atual = sel.value;
   sel.innerHTML = '<option value="">Selecione a unidade do escopo</option>';
   cacheEscopo.forEach(u => {
-    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Seq. ${escapeHtml(u.ordem)}: ${escapeHtml(labelSetorEscopo(u))} — ${escapeHtml(labelTarefaEscopo(u))}</option>`;
+    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Seq. ${escapeHtml(formatarOrdemEscopo(u.ordem))}: ${escapeHtml(labelSetorEscopo(u))} — ${escapeHtml(labelTarefaEscopo(u))}</option>`;
   });
   sel.innerHTML += '<option value="__outro__">Outro setor (especificar)</option>';
   if ([...sel.options].some(o => o.value === atual)) sel.value = atual;
@@ -2006,7 +2023,8 @@ function fecharModalEscopo() {
 
 document.getElementById('form-escopo').addEventListener('submit', e => {
   e.preventDefault();
-  const ordem = Number(document.getElementById('escopo-ordem').value);
+  const ordem = parseOrdemEscopoInput(document.getElementById('escopo-ordem').value);
+  if (ordem === null) { alert('Indique uma sequência válida (ex.: 1, 1.1, 1.2).'); return; }
   const setor = document.getElementById('escopo-setor').value.trim();
   const tarefa = document.getElementById('escopo-tarefa').value.trim();
   const tipo = document.getElementById('escopo-tipo').value;

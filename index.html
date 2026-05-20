@@ -180,6 +180,29 @@
         </table>
       </div>
     </div>
+
+    <div id="secao-auditoria" class="hidden bg-white rounded-xl border shadow-sm overflow-hidden border-amber-100">
+      <div class="p-4 bg-amber-50/80 border-b border-amber-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div>
+          <h2 class="font-extrabold text-gray-800 tracking-tight">Registo de alterações</h2>
+          <p class="text-[11px] text-gray-500 mt-0.5">Histórico do que cada utilizador alterou no sistema (apenas superadmin).</p>
+        </div>
+        <input type="search" id="filtro-auditoria" placeholder="Filtrar por utilizador, empresa ou ação…" class="w-full sm:w-64 px-3 py-2 border rounded-lg text-xs bg-white" oninput="aplicarFiltroAuditoria()">
+      </div>
+      <div class="overflow-x-auto max-h-80 overflow-y-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-100 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b sticky top-0">
+            <tr>
+              <th class="p-2 w-36">Data / Hora</th>
+              <th class="p-2">Utilizador</th>
+              <th class="p-2">Ação</th>
+              <th class="p-2">Projeto</th>
+            </tr>
+          </thead>
+          <tbody id="lista-auditoria" class="divide-y text-gray-700 text-xs"></tbody>
+        </table>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -287,7 +310,8 @@
           <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b">
             <tr>
               <th class="p-2 border-r text-center w-12">Nº</th>
-              <th class="p-2 border-r">Atividade / Entrega Estratégica</th>
+              <th class="p-2 border-r">Atividade</th>
+              <th class="p-2 border-r w-32">Obs</th>
               <th class="p-2 border-r w-36">Unidade / Setor</th>
               <th class="p-2 border-r w-32">Responsável</th>
               <th class="p-2 border-r w-40">Profissional Alocado</th>
@@ -535,6 +559,10 @@
     <form id="form-tarefa" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Descrição do Milestone / Atividade</label><input type="text" id="tar-nome" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Instalação Física dos Coletores Teep"></div>
       <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Observação</label>
+        <textarea id="tar-observacao" rows="2" class="w-full p-2 border rounded-lg text-sm resize-y" placeholder="Notas, dependências, contactos… (opcional)"></textarea>
+      </div>
+      <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Unidade / Setor de Trabalho</label>
         <select id="tar-unidade" class="w-full p-2 border rounded-lg text-sm bg-white">
           <option value="">Selecione a unidade do escopo</option>
@@ -679,6 +707,110 @@ function isTeepStaff() {
   return isTeepStaffRole(userRole);
 }
 
+function isSuperAdminUser() {
+  return userRole === 'superadmin';
+}
+
+function sanitizarDetalhesAuditoria(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+  const out = {};
+  const proibidos = /senha|password|token|secret/i;
+  Object.keys(obj).forEach(k => {
+    if (proibidos.test(k)) return;
+    const v = obj[k];
+    if (v != null && typeof v !== 'object') out[k] = v;
+  });
+  return Object.keys(out).length ? out : null;
+}
+
+function registrarAuditoria(opts) {
+  if (!currentUser || !auth.currentUser) return Promise.resolve();
+  const detalhes = sanitizarDetalhesAuditoria(opts.detalhes);
+  return db.collection('audit_logs').add({
+    acao: opts.acao || 'update',
+    entidade: opts.entidade || 'sistema',
+    entidadeId: opts.entidadeId || '',
+    empresaId: opts.empresaId || null,
+    empresaNome: opts.empresaNome || null,
+    descricao: (opts.descricao || '').slice(0, 500),
+    detalhes,
+    usuarioUid: currentUser.uid,
+    usuarioEmail: currentUser.email || '',
+    usuarioNome: currentUserNome || currentUser.email || '',
+    usuarioRole: userRole || '',
+    criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err => console.warn('Auditoria não gravada:', err));
+}
+
+function labelAcaoAuditoria(acao) {
+  const m = { create: 'Criação', update: 'Alteração', delete: 'Eliminação' };
+  return m[acao] || acao;
+}
+
+function formatarDataAuditoria(ts) {
+  if (!ts || !ts.toDate) return '—';
+  try {
+    return ts.toDate().toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return '—'; }
+}
+
+function aplicarFiltroAuditoria() {
+  const q = (document.getElementById('filtro-auditoria')?.value || '').trim().toLowerCase();
+  const filtrados = q
+    ? cacheAuditLogs.filter(l => {
+        const blob = [l.descricao, l.usuarioEmail, l.usuarioNome, l.empresaNome, l.entidade, l.acao, l.usuarioRole].join(' ').toLowerCase();
+        return blob.includes(q);
+      })
+    : cacheAuditLogs;
+  renderListaAuditoria(filtrados);
+}
+
+function renderListaAuditoria(logs) {
+  const tbody = document.getElementById('lista-auditoria');
+  if (!tbody) return;
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400 italic">Nenhum registo encontrado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = logs.map(l => {
+    const proj = l.empresaNome
+      ? escapeHtml(l.empresaNome)
+      : '<span class="text-gray-400">—</span>';
+    const user = escapeHtml(l.usuarioNome || l.usuarioEmail || '—');
+    const email = l.usuarioEmail && l.usuarioNome ? ` <span class="text-gray-400">(${escapeHtml(l.usuarioEmail)})</span>` : '';
+    const role = l.usuarioRole ? `<span class="text-[10px] text-gray-400 block">${escapeHtml(labelRoleUsuario(l.usuarioRole))}</span>` : '';
+    return `<tr class="hover:bg-gray-50/80">
+      <td class="p-2 whitespace-nowrap text-gray-500">${formatarDataAuditoria(l.criadoEm)}</td>
+      <td class="p-2"><span class="font-semibold">${user}</span>${email}${role}</td>
+      <td class="p-2"><span class="font-bold text-[10px] uppercase text-[#5C8374]">${escapeHtml(labelAcaoAuditoria(l.acao))}</span><br><span class="text-gray-700">${escapeHtml(l.descricao)}</span></td>
+      <td class="p-2">${proj}</td>
+    </tr>`;
+  }).join('');
+}
+
+function iniciarAuditoriaSuperadmin() {
+  const sec = document.getElementById('secao-auditoria');
+  if (!sec) return;
+  if (!isSuperAdminUser()) {
+    sec.classList.add('hidden');
+    if (unsubAuditoria) { unsubAuditoria(); unsubAuditoria = null; }
+    return;
+  }
+  sec.classList.remove('hidden');
+  if (unsubAuditoria) unsubAuditoria();
+  unsubAuditoria = db.collection('audit_logs')
+    .orderBy('criadoEm', 'desc')
+    .limit(400)
+    .onSnapshot(snap => {
+      cacheAuditLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      aplicarFiltroAuditoria();
+    }, err => {
+      console.error(err);
+      const tbody = document.getElementById('lista-auditoria');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 text-xs">Erro ao carregar auditoria. Publique firestore.rules e o índice se o Console pedir.</td></tr>';
+    });
+}
+
 function labelRoleUsuario(role) {
   if (role === 'superadmin') return 'Superadmin';
   if (role === 'teep_admin') return 'Admin Teep';
@@ -720,6 +852,7 @@ function statusEfetivoTarefa(t) {
 
 // Estado Global de Fluxo da Aplicação
 let currentUser = null;
+let currentUserNome = '';
 let userRole = null; 
 let currentEmpresaId = null;
 let cacheProfissionais = [];
@@ -729,7 +862,8 @@ let tarefaEditId = null;
 let cacheTarefas = [];
 
 // Ouvintes (Listeners) em Tempo Real
-let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null, unsubTeepStaff = null;
+let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null, unsubTeepStaff = null, unsubAuditoria = null;
+let cacheAuditLogs = [];
 let cacheEmpresasDocs = [];
 let cacheNomeContactoEmpresa = {};
 let unsubProfissionais = null, unsubTarefas = null, unsubEscopo = null;
@@ -832,6 +966,7 @@ function exigirTrocaSenhaCliente() {
 function processarPerfilLogado(doc) {
   const udata = doc.data();
   userRole = udata.role;
+  currentUserNome = udata.nome || '';
   if (udata.mustChangePassword) {
     exigirTrocaSenhaCliente();
     return;
@@ -900,6 +1035,7 @@ function logout() {
   limparTodosListeners();
   currentUser = null;
   userRole = null;
+  currentUserNome = '';
   currentEmpresaId = null;
   auth.signOut();
 }
@@ -928,6 +1064,10 @@ document.getElementById('form-trocar-senha')?.addEventListener('submit', e => {
     .then(() => db.collection('usuarios').doc(user.uid).update({
       mustChangePassword: false,
       senhaAlteradaEm: firebase.firestore.FieldValue.serverTimestamp()
+    }))
+    .then(() => registrarAuditoria({
+      acao: 'update', entidade: 'senha', entidadeId: user.uid,
+      descricao: 'Definiu nova senha pessoal (primeiro acesso ou troca obrigatória)'
     }))
     .then(() => carregarPerfilUsuario(user.uid))
     .then(doc => {
@@ -1156,6 +1296,8 @@ function iniciarPainelAdmin() {
   if(unsubUsuariosStats) unsubUsuariosStats();
   if(unsubTarefasStats) unsubTarefasStats();
   if(unsubTeepStaff) unsubTeepStaff();
+  if(unsubAuditoria) unsubAuditoria();
+  iniciarAuditoriaSuperadmin();
 
   unsubStats = db.collection('empresas').onSnapshot(snap => {
     let tEmp = snap.size, tAct = 0;
@@ -1216,6 +1358,11 @@ document.getElementById('form-teep-admin')?.addEventListener('submit', e => {
     .then(res => db.collection('usuarios').doc(res.user.uid).set({
       email, nome: nome || email, role, teepStaff: true,
       mustChangePassword: senhaProvisoria
+    }).then(() => ({ uid: res.user.uid })))
+    .then(({ uid }) => registrarAuditoria({
+      acao: 'create', entidade: 'teep_staff', entidadeId: uid,
+      descricao: 'Criou acesso ' + labelRoleUsuario(role) + ': ' + email,
+      detalhes: { email, role, senhaProvisoria }
     }))
     .then(() => {
       secondAuth.signOut();
@@ -1237,12 +1384,25 @@ function removerTeepStaff(uid) {
       alert('Apenas superadmin pode remover outro superadmin.');
       return;
     }
-    return found.doc.ref.delete();
+    return found.doc.ref.delete().then(() => registrarAuditoria({
+      acao: 'delete', entidade: 'teep_staff', entidadeId: uid,
+      descricao: 'Removeu administrador Teep (' + (found.doc.data().email || uid) + ')',
+      detalhes: { role: found.doc.data().role }
+    }));
   }).catch(err => alert(err.message));
 }
 window.removerTeepStaff = removerTeepStaff;
 
-function alternarEstadoEmpresa(id, atual) { db.collection('empresas').doc(id).update({ ativa: !atual }); }
+function alternarEstadoEmpresa(id, atual) {
+  const emp = cacheEmpresasDocs.find(d => d.id === id);
+  const nome = emp?.data()?.nome || id;
+  db.collection('empresas').doc(id).update({ ativa: !atual })
+    .then(() => registrarAuditoria({
+      acao: 'update', entidade: 'empresa', entidadeId: id,
+      empresaId: id, empresaNome: nome,
+      descricao: 'Empresa «' + nome + '»: ' + (!atual ? 'activada' : 'desactivada')
+    }));
+}
 
 function formatarCodigoEmpresa(codigo) {
   if (codigo == null || codigo === '') return '—';
@@ -1259,6 +1419,16 @@ function reservarProximoCodigoEmpresa() {
       return proximo;
     })
   );
+}
+
+function contextoEmpresaAuditoria() {
+  const emp = cacheEmpresasDocs.find(d => d.id === currentEmpresaId);
+  const titulo = document.getElementById('nome-empresa-titulo')?.innerText || '';
+  const nomeTitulo = titulo.replace(/^Plano de atividades - /, '').trim();
+  return {
+    empresaId: currentEmpresaId || null,
+    empresaNome: emp?.data()?.nome || nomeTitulo || null
+  };
 }
 
 function entrarComoAdminNaEmpresa(empresaId) {
@@ -1300,9 +1470,14 @@ document.getElementById('form-nova-empresa').addEventListener('submit', e => {
             email: uEmail, nome: nomeUsuario, role: 'admin',
             empresaId: docRef.id, empresaNome: nome, empresaCodigo: codigo,
             mustChangePassword: senhaProvisoria
-          }).then(() => docRef.update({ adminUid: uid }));
+          }).then(() => docRef.update({ adminUid: uid }).then(() => ({ docRef, uid, codigo })));
         })
-        .then(() => ({ codigo, nome, nomeUsuario, uEmail, uSenha, senhaProvisoria }))
+        .then(({ docRef, uid, codigo }) => registrarAuditoria({
+          acao: 'create', entidade: 'empresa', entidadeId: docRef.id,
+          empresaId: docRef.id, empresaNome: nome,
+          descricao: 'Registou empresa «' + nome + '» (cód. ' + formatarCodigoEmpresa(codigo) + ') e admin ' + uEmail,
+          detalhes: { codigo, email: uEmail, senhaProvisoria }
+        }).then(() => ({ codigo, nome, nomeUsuario, uEmail, uSenha, senhaProvisoria }))
     )
     .then(data => {
       secondAuth.signOut();
@@ -1477,11 +1652,19 @@ document.getElementById('form-novo-usuario').addEventListener('submit', e => {
         const p = Object.keys(patch).length
           ? db.collection('empresas').doc(activeUserManageEmpresaId).update(patch)
           : Promise.resolve();
-        return p.then(() => db.collection('empresas').doc(activeUserManageEmpresaId).get());
+        return p.then(() => db.collection('empresas').doc(activeUserManageEmpresaId).get().then(snap => ({ empSnap: snap, uid, email, nome, role, senhaProvisoria })));
       });
     })
-    .then(empSnap => {
+    .then(({ empSnap, uid, email, nome, role, senhaProvisoria }) => {
       const emp = empSnap && empSnap.exists ? empSnap.data() : {};
+      return registrarAuditoria({
+        acao: 'create', entidade: 'usuario', entidadeId: uid,
+        empresaId: activeUserManageEmpresaId, empresaNome: emp.nome || '',
+        descricao: 'Criou utilizador ' + email + ' (' + labelRoleUsuario(role) + ') no projeto «' + (emp.nome || '') + '»',
+        detalhes: { email, role, senhaProvisoria }
+      }).then(() => emp);
+    })
+    .then(emp => {
       secondAuth.signOut();
       document.getElementById('form-novo-usuario').reset();
       atualizarListaUsuariosEmpresa();
@@ -1553,6 +1736,11 @@ document.getElementById('btn-repor-senha-provisoria')?.addEventListener('click',
     const empSnap = await db.collection('empresas').doc(activeUserManageEmpresaId).get();
     const emp = empSnap.exists ? empSnap.data() : {};
     const u = (await getUsuarioDoc(usuarioEditId))?.doc.data() || {};
+    await registrarAuditoria({
+      acao: 'update', entidade: 'senha', entidadeId: usuarioEditId,
+      empresaId: activeUserManageEmpresaId, empresaNome: emp.nome || '',
+      descricao: 'Gerou nova senha provisória para ' + (u.email || usuarioEditEmail)
+    });
     mostrarModalCredenciaisCliente({
       nomeEmpresa: emp.nome, codigo: emp.codigo, email: u.email || usuarioEditEmail,
       senha, nomeContacto: u.nome
@@ -1597,6 +1785,17 @@ document.getElementById('form-editar-usuario').addEventListener('submit', e => {
         if (Object.keys(patch).length) return empSnap.ref.update(patch);
       });
     })
+    .then(() => db.collection('empresas').doc(activeUserManageEmpresaId).get())
+    .then(empSnap => {
+      const emp = empSnap?.exists ? empSnap.data() : {};
+      const alterouSenha = novaSenha.length >= 6;
+      return registrarAuditoria({
+        acao: 'update', entidade: 'usuario', entidadeId: usuarioEditId,
+        empresaId: activeUserManageEmpresaId, empresaNome: emp.nome || '',
+        descricao: 'Actualizou utilizador ' + usuarioEditEmail + ' (' + labelRoleUsuario(role) + ')' + (alterouSenha ? ' e definiu nova senha' : ''),
+        detalhes: { role, alterouSenha }
+      });
+    })
     .then(() => {
       alert('Utilizador atualizado.');
       voltarListaUsuarios();
@@ -1609,7 +1808,21 @@ document.getElementById('form-editar-usuario').addEventListener('submit', e => {
 function removerAcessoUsuario(uid) {
   if (!confirm('Remover este acesso? O perfil será apagado (o login no Firebase Authentication mantém-se até remover manualmente no Console).')) return;
   migrarPerfilParaUsuarios(uid)
-    .then(() => db.collection('usuarios').doc(uid).delete())
+    .then(() => getUsuarioDoc(uid))
+    .then(found => {
+      const u = found?.doc.data() || {};
+      return db.collection('usuarios').doc(uid).delete().then(() => u);
+    })
+    .then(u => {
+      return db.collection('empresas').doc(activeUserManageEmpresaId).get().then(empSnap => {
+        const emp = empSnap?.exists ? empSnap.data() : {};
+        return registrarAuditoria({
+          acao: 'delete', entidade: 'usuario', entidadeId: uid,
+          empresaId: activeUserManageEmpresaId, empresaNome: emp.nome || '',
+          descricao: 'Removeu utilizador ' + (u.email || uid) + ' do projeto «' + (emp.nome || '') + '»'
+        });
+      });
+    })
     .then(() => atualizarListaUsuariosEmpresa())
     .catch(err => alert(err.message));
 }
@@ -1831,6 +2044,7 @@ function renderTarefas(tarefas) {
       <tr class="${corFundoLinha} border-b">
         <td class="p-2 border-r text-center text-gray-400 font-mono text-[11px]">${i+1}</td>
         <td class="p-2 border-r font-medium text-gray-800">${escapeHtml(t.nome)}</td>
+        <td class="p-2 border-r text-gray-500 text-[11px] max-w-[10rem]"><span class="line-clamp-3" title="${escapeHtml(t.observacao || '')}">${t.observacao ? escapeHtml(t.observacao) : '<span class="text-gray-300">—</span>'}</span></td>
         <td class="p-2 border-r text-gray-600 text-[11px]">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
         <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${badgeEmpresaResponsavel(t.empresa)}">${escapeHtml(t.empresa)}</span></td>
         <td class="p-2 border-r text-gray-600 text-[11px] leading-relaxed">${htmlProfissionaisTarefa(t)}</td>
@@ -1850,7 +2064,15 @@ function renderTarefas(tarefas) {
 }
 
 function alterarStatus(id, nv) {
-  db.collection('empresas').doc(currentEmpresaId).collection('tarefas').doc(id).update({ status: nv });
+  const t = cacheTarefas.find(x => x.id === id);
+  const ctx = contextoEmpresaAuditoria();
+  db.collection('empresas').doc(currentEmpresaId).collection('tarefas').doc(id).update({ status: nv })
+    .then(() => registrarAuditoria({
+      acao: 'update', entidade: 'tarefa', entidadeId: id,
+      empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+      descricao: 'Alterou estado da tarefa «' + (t?.nome || id) + '» para ' + (statusLabel[nv] || nv),
+      detalhes: { status: nv }
+    }));
 }
 
 // Atualização Dinâmica do Formulário de Vinculação de Atividades
@@ -2015,12 +2237,26 @@ document.getElementById('form-profissional').addEventListener('submit', e => {
   const nome = document.getElementById('prof-nome').value;
   const funcao = document.getElementById('prof-funcao').value;
   const empresa = document.getElementById('prof-empresa').value;
+  const ctx = contextoEmpresaAuditoria();
   db.collection('empresas').doc(currentEmpresaId).collection('profissionais').add({ nome, funcao, empresa })
+    .then(ref => registrarAuditoria({
+      acao: 'create', entidade: 'profissional', entidadeId: ref.id,
+      empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+      descricao: 'Alocou profissional «' + nome + '» (' + empresa + ')',
+      detalhes: { funcao, empresa }
+    }))
     .then(() => fecharModalProfissional());
 });
 function excluirProfissional(id) {
   if(confirm("Deseja desvincular este profissional do projeto?")) {
-    db.collection('empresas').doc(currentEmpresaId).collection('profissionais').doc(id).delete();
+    const p = cacheProfissionais.find(x => x.id === id);
+    const ctx = contextoEmpresaAuditoria();
+    db.collection('empresas').doc(currentEmpresaId).collection('profissionais').doc(id).delete()
+      .then(() => registrarAuditoria({
+        acao: 'delete', entidade: 'profissional', entidadeId: id,
+        empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+        descricao: 'Removeu profissional «' + (p?.nome || id) + '» do projeto'
+      }));
   }
 }
 
@@ -2081,13 +2317,34 @@ document.getElementById('form-escopo').addEventListener('submit', e => {
   }
   const payload = { ordem, setor, unidade: setor, tarefa, tipo, maquinas, horas };
   const col = db.collection('empresas').doc(currentEmpresaId).collection('escopo');
-  const prom = escopoEditId ? col.doc(escopoEditId).update(payload) : col.add(payload);
-  prom.then(() => fecharModalEscopo());
+  const ctx = contextoEmpresaAuditoria();
+  const descBase = 'Escopo seq. ' + formatarOrdemEscopo(ordem) + ' — «' + tarefa + '» (' + setor + ')';
+  const prom = escopoEditId
+    ? col.doc(escopoEditId).update(payload).then(() => ({ id: escopoEditId, edit: true }))
+    : col.add(payload).then(ref => ({ id: ref.id, edit: false }));
+  prom
+    .then(({ id, edit }) => registrarAuditoria({
+      acao: edit ? 'update' : 'create', entidade: 'escopo', entidadeId: id,
+      empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+      descricao: (edit ? 'Editou item de escopo: ' : 'Adicionou item de escopo: ') + descBase,
+      detalhes: { ordem, setor, tarefa, tipo, horas }
+    }))
+    .then(() => fecharModalEscopo());
 });
 
 function excluirUnidadeEscopo(id) {
   if(confirm('Deseja remover este item do escopo?')) {
-    db.collection('empresas').doc(currentEmpresaId).collection('escopo').doc(id).delete();
+    const item = cacheEscopo.find(x => x.id === id);
+    const ctx = contextoEmpresaAuditoria();
+    const desc = item
+      ? 'Removeu escopo seq. ' + formatarOrdemEscopo(item.ordem) + ' — «' + labelTarefaEscopo(item) + '»'
+      : 'Removeu item de escopo';
+    db.collection('empresas').doc(currentEmpresaId).collection('escopo').doc(id).delete()
+      .then(() => registrarAuditoria({
+        acao: 'delete', entidade: 'escopo', entidadeId: id,
+        empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+        descricao: desc
+      }));
   }
 }
 
@@ -2123,6 +2380,7 @@ function abrirModalTarefa(idEditar) {
     const t = cacheTarefas.find(x => x.id === tarefaEditId);
     if (t) {
       document.getElementById('tar-nome').value = t.nome || '';
+      document.getElementById('tar-observacao').value = t.observacao || '';
       document.getElementById('tar-empresa').value = t.empresa || 'Teep';
       document.getElementById('tar-inicio').value = t.inicio || '';
       document.getElementById('tar-fim').value = t.fim || '';
@@ -2187,6 +2445,7 @@ function obterUnidadeSetorFormTarefa() {
 document.getElementById('form-tarefa').addEventListener('submit', e => {
   e.preventDefault();
   const nome = document.getElementById('tar-nome').value.trim();
+  const observacao = document.getElementById('tar-observacao').value.trim();
   const empresa = document.getElementById('tar-empresa').value;
   const { profIds, profNomes, profissionais } = obterProfissionaisSelecionadosTarefa();
   const profNome = profNomes.length ? profNomes.join(', ') : 'Não alocado';
@@ -2202,23 +2461,45 @@ document.getElementById('form-tarefa').addEventListener('submit', e => {
 
   const col = db.collection('empresas').doc(currentEmpresaId).collection('tarefas');
   const payload = {
-    nome, empresa, profId, profNome, profIds, profNomes, profissionais,
+    nome, observacao, empresa, profId, profNome, profIds, profNomes, profissionais,
     inicio, fim, unidadeEscopoId, unidadeNome, setor
   };
 
+  const ctx = contextoEmpresaAuditoria();
   if (tarefaEditId) {
-    col.doc(tarefaEditId).update(payload).then(() => fecharModalTarefa());
+    col.doc(tarefaEditId).update(payload)
+      .then(() => registrarAuditoria({
+        acao: 'update', entidade: 'tarefa', entidadeId: tarefaEditId,
+        empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+        descricao: 'Editou tarefa no cronograma: «' + nome + '»',
+        detalhes: { inicio, fim, setor, observacao }
+      }))
+      .then(() => fecharModalTarefa());
   } else {
     col.add({
       ...payload,
       status: 'pendente',
       criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => fecharModalTarefa());
+    })
+      .then(ref => registrarAuditoria({
+        acao: 'create', entidade: 'tarefa', entidadeId: ref.id,
+        empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+        descricao: 'Agendou tarefa no cronograma: «' + nome + '»',
+        detalhes: { inicio, fim, setor, observacao }
+      }))
+      .then(() => fecharModalTarefa());
   }
 });
 function excluirTarefa(id) {
   if(confirm("Deseja eliminar esta atividade do cronograma executivo?")) {
-    db.collection('empresas').doc(currentEmpresaId).collection('tarefas').doc(id).delete();
+    const t = cacheTarefas.find(x => x.id === id);
+    const ctx = contextoEmpresaAuditoria();
+    db.collection('empresas').doc(currentEmpresaId).collection('tarefas').doc(id).delete()
+      .then(() => registrarAuditoria({
+        acao: 'delete', entidade: 'tarefa', entidadeId: id,
+        empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+        descricao: 'Eliminou tarefa «' + (t?.nome || id) + '» do cronograma'
+      }));
   }
 }
 

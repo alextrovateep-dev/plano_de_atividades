@@ -65,9 +65,17 @@
   .plano-kpi.kpi-total .plano-kpi-label{color:rgba(255,255,255,.85)}
   .plano-kpi.kpi-total .plano-kpi-value{color:#fff}
   .plano-kpi-foot{margin-top:1rem;padding-top:.85rem;border-top:1px solid #e2ebe8;font-size:.68rem;color:#94a3b8;line-height:1.5}
-  .prof-card{background:#fff;border-radius:.75rem;padding:1rem 1.1rem;box-shadow:0 1px 2px rgba(15,23,42,.05);border:1px solid #f1f5f9;transition:box-shadow .15s,border-color .15s;height:100%}
-  .prof-card:hover{box-shadow:0 4px 12px rgba(15,23,42,.08);border-color:#e2e8f0}
-  .prof-avatar{width:2.5rem;height:2.5rem;border-radius:.625rem;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0}
+  .plano-section-head.compact{padding:.75rem 1rem}
+  .plano-card-body.compact{padding:.75rem 1rem}
+  .grid-colaboradores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+  @media(max-width:960px){.grid-colaboradores{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:480px){.grid-colaboradores{grid-template-columns:1fr}}
+  .prof-card{background:#fff;border-radius:.5rem;padding:.5rem .6rem;box-shadow:0 1px 2px rgba(15,23,42,.04);border:1px solid #f1f5f9;transition:box-shadow .15s,border-color .15s;height:100%;align-items:flex-start}
+  .prof-card:hover{box-shadow:0 2px 8px rgba(15,23,42,.06);border-color:#e2e8f0}
+  .prof-avatar{width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0}
+  .prof-card .prof-nome{font-size:.8rem;font-weight:700;color:#1e293b;line-height:1.2;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .prof-card .prof-org{font-size:.65rem;color:#5C8374;font-weight:600;line-height:1.2;margin-top:.15rem;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .prof-card .prof-funcao{font-size:.65rem;color:#64748b;line-height:1.25;margin-top:.2rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .prof-avatar.teep{background:#dcfce7;color:#166534}
   .prof-avatar.cliente{background:#ffedd5;color:#c2410c}
   .prof-avatar.outro{background:#e0e7ff;color:#3730a3}
@@ -282,16 +290,16 @@
   <main class="plano-main flex-1 max-w-7xl w-full mx-auto space-y-6">
     
     <section class="plano-card">
-      <div class="plano-section-head">
+      <div class="plano-section-head compact">
         <div class="min-w-0">
-          <h2 class="plano-section-title"><span class="plano-section-num">1</span>Engenharia e equipe</h2>
-          <p class="plano-section-desc">Profissionais alocados à execução da implantação</p>
+          <h2 class="plano-section-title"><span class="plano-section-num">1</span>Colaboradores</h2>
+          <p class="plano-section-desc">Equipa alocada à implantação</p>
         </div>
-        <button type="button" id="btn-add-profissional" onclick="abrirModalProfissional()" class="hidden btn-plano btn-plano-dark">+ Alocar profissional</button>
+        <button type="button" id="btn-add-profissional" onclick="abrirModalProfissional()" class="hidden btn-plano btn-plano-dark">+ Alocar</button>
       </div>
-      <div class="plano-card-body">
-        <div id="lista-profissionais" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        <p id="semProfissionais" class="plano-empty hidden">Nenhum profissional alocado neste projeto.</p>
+      <div class="plano-card-body compact">
+        <div id="lista-profissionais" class="grid-colaboradores"></div>
+        <p id="semProfissionais" class="plano-empty hidden py-3">Nenhum colaborador alocado.</p>
       </div>
     </section>
 
@@ -299,7 +307,7 @@
       <div class="plano-section-head">
         <div class="min-w-0 max-w-2xl">
           <h2 class="plano-section-title"><span class="plano-section-num">2</span>Escopo e dimensionamento</h2>
-          <p class="plano-section-desc">Esforço por setor e tarefa (horas). O cronograma define <strong class="text-slate-600 font-semibold">quando</strong> cada atividade ocorre.</p>
+          <p class="plano-section-desc">Esforço por setor e tarefa (horas).</p>
         </div>
         <button type="button" id="btn-add-escopo" onclick="abrirModalEscopo()" class="hidden btn-plano btn-plano-dark shrink-0">+ Item de escopo</button>
       </div>
@@ -1954,14 +1962,14 @@ function iniciarListenersProjeto() {
         ? `<button type="button" onclick="excluirProfissional('${escapeHtml(p.id)}')" class="text-slate-300 hover:text-red-500 text-lg leading-none p-1" title="Remover">×</button>` : '';
 
       list.innerHTML += `
-        <article class="prof-card flex gap-3">
+        <article class="prof-card flex gap-2">
           <div class="${avCls}">${escapeHtml((p.nome || '').substring(0, 2))}</div>
           <div class="min-w-0 flex-1">
-            <h4 class="text-sm font-bold text-slate-800 truncate">${escapeHtml(p.nome)}</h4>
-            <p class="text-[11px] text-[#5C8374] font-semibold mt-0.5 truncate">${escapeHtml(labelOrganizacaoProfissional(p.empresa))}</p>
-            <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${escapeHtml(p.funcao)}</p>
+            <h4 class="prof-nome">${escapeHtml(p.nome)}</h4>
+            <p class="prof-org">${escapeHtml(labelOrganizacaoProfissional(p.empresa))}</p>
+            <p class="prof-funcao">${escapeHtml(p.funcao)}</p>
           </div>
-          ${btnDel ? `<div class="shrink-0">${btnDel}</div>` : ''}
+          ${btnDel ? `<div class="shrink-0 -mr-1">${btnDel}</div>` : ''}
         </article>`;
     });
     atualizarSelectProfissionais();

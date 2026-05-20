@@ -1462,8 +1462,8 @@ document.getElementById('form-nova-empresa').addEventListener('submit', e => {
       nome, nomeUsuario, emailAcesso: uEmail, ativa: true,
       criadaEm: firebase.firestore.FieldValue.serverTimestamp()
     }).then(docRef => ({ docRef, codigo })))
-    .then(({ docRef, codigo }) =>
-      secondAuth.createUserWithEmailAndPassword(uEmail, uSenha)
+    .then(({ docRef, codigo }) => {
+      return secondAuth.createUserWithEmailAndPassword(uEmail, uSenha)
         .then(res => {
           const uid = res.user.uid;
           return db.collection('usuarios').doc(uid).set({
@@ -1472,13 +1472,15 @@ document.getElementById('form-nova-empresa').addEventListener('submit', e => {
             mustChangePassword: senhaProvisoria
           }).then(() => docRef.update({ adminUid: uid }).then(() => ({ docRef, uid, codigo })));
         })
-        .then(({ docRef, uid, codigo }) => registrarAuditoria({
-          acao: 'create', entidade: 'empresa', entidadeId: docRef.id,
-          empresaId: docRef.id, empresaNome: nome,
-          descricao: 'Registou empresa «' + nome + '» (cód. ' + formatarCodigoEmpresa(codigo) + ') e admin ' + uEmail,
-          detalhes: { codigo, email: uEmail, senhaProvisoria }
-        }).then(() => ({ codigo, nome, nomeUsuario, uEmail, uSenha, senhaProvisoria }))
-    )
+        .then(({ docRef, uid, codigo }) =>
+          registrarAuditoria({
+            acao: 'create', entidade: 'empresa', entidadeId: docRef.id,
+            empresaId: docRef.id, empresaNome: nome,
+            descricao: 'Registou empresa «' + nome + '» (cód. ' + formatarCodigoEmpresa(codigo) + ') e admin ' + uEmail,
+            detalhes: { codigo, email: uEmail, senhaProvisoria }
+          }).then(() => ({ codigo, nome, nomeUsuario, uEmail, uSenha, senhaProvisoria }))
+        );
+    })
     .then(data => {
       secondAuth.signOut();
       fecharModalNovaEmpresa();
@@ -2044,7 +2046,7 @@ function renderTarefas(tarefas) {
       <tr class="${corFundoLinha} border-b">
         <td class="p-2 border-r text-center text-gray-400 font-mono text-[11px]">${i+1}</td>
         <td class="p-2 border-r font-medium text-gray-800">${escapeHtml(t.nome)}</td>
-        <td class="p-2 border-r text-gray-500 text-[11px] max-w-[10rem]"><span class="line-clamp-3" title="${escapeHtml(t.observacao || '')}">${t.observacao ? escapeHtml(t.observacao) : '<span class="text-gray-300">—</span>'}</span></td>
+        <td class="p-2 border-r text-gray-500 text-[11px] max-w-[10rem]"><span class="line-clamp-3" title="${escapeHtml(t.observacao || '')}">${t.observacao ? escapeHtml(t.observacao) : '\u2014'}</span></td>
         <td class="p-2 border-r text-gray-600 text-[11px]">${escapeHtml(formatarUnidadeSetorTarefa(t))}</td>
         <td class="p-2 border-r text-gray-600 text-center font-semibold text-[11px]"><span class="px-2 py-0.5 rounded ${badgeEmpresaResponsavel(t.empresa)}">${escapeHtml(t.empresa)}</span></td>
         <td class="p-2 border-r text-gray-600 text-[11px] leading-relaxed">${htmlProfissionaisTarefa(t)}</td>

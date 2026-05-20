@@ -118,8 +118,9 @@
         height="35"
         class="h-8 w-auto object-contain"
       >
-      <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-semibold border border-gray-200">Painel administrativo</span>
+      <button type="button" id="tab-admin-painel" onclick="mostrarAbaAdmin('painel')" class="text-xs px-2.5 py-1 rounded-md font-semibold border transition bg-[#5C8374]/10 text-[#5C8374] border-[#5C8374]/30">Painel administrativo</button>
       <span id="admin-role-badge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#5C8374]/10 text-[#5C8374] border border-[#5C8374]/20 hidden"></span>
+      <button type="button" id="tab-admin-auditoria" onclick="mostrarAbaAdmin('auditoria')" class="hidden text-xs px-2.5 py-1 rounded-md font-semibold border border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100 transition">Log de Ações</button>
     </div>
     <div class="flex items-center gap-4">
       <span id="admin-user-email" class="text-sm text-gray-600 font-medium"></span>
@@ -127,7 +128,7 @@
     </div>
   </header>
 
-  <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+  <main id="admin-painel-principal" class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col justify-between"><span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Empresas</span><h3 id="stat-empresas" class="text-3xl font-black text-gray-800 mt-2">0</h3></div>
       <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col justify-between"><span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Utilizadores</span><h3 id="stat-usuarios" class="text-3xl font-black text-gray-800 mt-2">0</h3></div>
@@ -180,16 +181,18 @@
         </table>
       </div>
     </div>
+  </main>
 
-    <div id="secao-auditoria" class="hidden bg-white rounded-xl border shadow-sm overflow-hidden border-amber-100">
+  <main id="admin-painel-auditoria" class="hidden flex-1 p-6 max-w-7xl w-full mx-auto">
+    <div class="bg-white rounded-xl border shadow-sm overflow-hidden border-amber-100">
       <div class="p-4 bg-amber-50/80 border-b border-amber-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 class="font-extrabold text-gray-800 tracking-tight">Registo de alterações</h2>
-          <p class="text-[11px] text-gray-500 mt-0.5">Histórico do que cada utilizador alterou no sistema (apenas superadmin).</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Histórico do que cada utilizador alterou no sistema.</p>
         </div>
         <input type="search" id="filtro-auditoria" placeholder="Filtrar por utilizador, empresa ou ação…" class="w-full sm:w-64 px-3 py-2 border rounded-lg text-xs bg-white" oninput="aplicarFiltroAuditoria()">
       </div>
-      <div class="overflow-x-auto max-h-80 overflow-y-auto">
+      <div class="overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-100 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b sticky top-0">
             <tr>
@@ -788,16 +791,50 @@ function renderListaAuditoria(logs) {
   }).join('');
 }
 
+function classeTabAdmin(ativa) {
+  return ativa
+    ? 'text-xs px-2.5 py-1 rounded-md font-semibold border transition bg-[#5C8374]/10 text-[#5C8374] border-[#5C8374]/30'
+    : 'text-xs px-2.5 py-1 rounded-md font-semibold border border-gray-200 text-gray-600 bg-gray-100 hover:bg-gray-200 transition';
+}
+
+function classeTabLogAdmin(ativa) {
+  return ativa
+    ? 'text-xs px-2.5 py-1 rounded-md font-semibold border border-amber-300 text-amber-900 bg-amber-100 transition'
+    : 'text-xs px-2.5 py-1 rounded-md font-semibold border border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100 transition';
+}
+
+function atualizarTabsAdminHeader() {
+  const tabPainel = document.getElementById('tab-admin-painel');
+  const tabLog = document.getElementById('tab-admin-auditoria');
+  const showLog = isSuperAdminUser();
+  if (tabPainel) tabPainel.className = classeTabAdmin(adminAbaAtual === 'painel');
+  if (tabLog) {
+    if (showLog) {
+      tabLog.className = classeTabLogAdmin(adminAbaAtual === 'auditoria');
+    } else {
+      tabLog.classList.add('hidden');
+    }
+  }
+}
+
+function mostrarAbaAdmin(aba) {
+  if (aba === 'auditoria' && !isSuperAdminUser()) return;
+  adminAbaAtual = aba;
+  const principal = document.getElementById('admin-painel-principal');
+  const auditoria = document.getElementById('admin-painel-auditoria');
+  if (principal) principal.classList.toggle('hidden', aba !== 'painel');
+  if (auditoria) auditoria.classList.toggle('hidden', aba !== 'auditoria');
+  atualizarTabsAdminHeader();
+  if (aba === 'auditoria') iniciarAuditoriaSuperadmin();
+}
+window.mostrarAbaAdmin = mostrarAbaAdmin;
+
 function iniciarAuditoriaSuperadmin() {
-  const sec = document.getElementById('secao-auditoria');
-  if (!sec) return;
   if (!isSuperAdminUser()) {
-    sec.classList.add('hidden');
     if (unsubAuditoria) { unsubAuditoria(); unsubAuditoria = null; }
     return;
   }
-  sec.classList.remove('hidden');
-  if (unsubAuditoria) unsubAuditoria();
+  if (unsubAuditoria) return;
   unsubAuditoria = db.collection('audit_logs')
     .orderBy('criadoEm', 'desc')
     .limit(400)
@@ -864,6 +901,7 @@ let cacheTarefas = [];
 // Ouvintes (Listeners) em Tempo Real
 let unsubEmpresas = null, unsubStats = null, unsubUsuariosStats = null, unsubTarefasStats = null, unsubTeepStaff = null, unsubAuditoria = null;
 let cacheAuditLogs = [];
+let adminAbaAtual = 'painel';
 let cacheEmpresasDocs = [];
 let cacheNomeContactoEmpresa = {};
 let unsubProfissionais = null, unsubTarefas = null, unsubEscopo = null;
@@ -980,8 +1018,10 @@ function processarPerfilLogado(doc) {
     }
     const roleWrap = document.getElementById('teep-admin-role-wrap');
     if (roleWrap) roleWrap.classList.toggle('hidden', userRole !== 'superadmin');
+    adminAbaAtual = 'painel';
     switchView('view-admin');
     iniciarPainelAdmin();
+    mostrarAbaAdmin('painel');
     return;
   }
   if (!udata.empresaId) {
@@ -1123,7 +1163,9 @@ document.getElementById('form-login').addEventListener('submit', e => {
 function voltarParaAdmin() {
   if (!isTeepStaff()) return;
   limparListenersProjeto();
+  adminAbaAtual = 'painel';
   switchView('view-admin');
+  mostrarAbaAdmin('painel');
 }
 
 function configurarPermissoesInterface(podeEditar) {
@@ -1296,8 +1338,8 @@ function iniciarPainelAdmin() {
   if(unsubUsuariosStats) unsubUsuariosStats();
   if(unsubTarefasStats) unsubTarefasStats();
   if(unsubTeepStaff) unsubTeepStaff();
-  if(unsubAuditoria) unsubAuditoria();
-  iniciarAuditoriaSuperadmin();
+  if(unsubAuditoria) { unsubAuditoria(); unsubAuditoria = null; }
+  atualizarTabsAdminHeader();
 
   unsubStats = db.collection('empresas').onSnapshot(snap => {
     let tEmp = snap.size, tAct = 0;

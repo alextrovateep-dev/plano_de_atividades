@@ -28,7 +28,9 @@
   /* Plano de atividades — layout profissional */
   .plano-app{background:linear-gradient(180deg,#f0f4f2 0%,#eef1f5 48%,#f4f6f8 100%)}
   .plano-header{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid #e8ecef;box-shadow:0 1px 3px rgba(15,23,42,.04)}
-  .plano-main{padding:1.5rem 1.75rem 2.5rem}
+  .plano-layout-shell{max-width:80rem;width:100%;margin-inline:auto;padding-inline:1.75rem;box-sizing:border-box}
+  .plano-header-inner{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding-block:.875rem}
+  .plano-main{padding-block:1.5rem 2.5rem}
   .plano-card{background:#fff;border-radius:1rem;box-shadow:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.04);border:1px solid rgba(226,232,240,.8);overflow:hidden}
   .plano-card-body{padding:1.25rem 1.5rem 1.5rem}
   .plano-section-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1.25rem 1.5rem;background:linear-gradient(180deg,#fafbfc 0%,#fff 100%);border-bottom:1px solid #f1f5f9}
@@ -266,28 +268,31 @@
 </div>
 
 <div id="view-empresa" class="view plano-app min-h-screen flex flex-col">
-  <header class="plano-header px-5 sm:px-8 py-3.5 flex justify-between items-center gap-4">
-    <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-      <img
-        src="https://teep.com.br/wp-content/uploads/2023/11/cropped-cropped-teep-logo-menor-300x87.png"
-        alt="Teep"
-        width="120"
-        height="35"
-        class="h-8 w-auto shrink-0 object-contain hidden sm:block"
-      >
-      <button id="btn-voltar-admin" onclick="voltarParaAdmin()" class="hidden btn-plano btn-plano-ghost shrink-0">← Voltar</button>
-      <div class="min-w-0 border-l border-slate-200 pl-3 sm:pl-4">
-        <h1 id="nome-empresa-titulo" class="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate">Carregando...</h1>
-        <p class="text-[11px] text-slate-500 mt-0.5">Plano de atividades · TeepOEE</p>
+  <header class="plano-header">
+    <div class="plano-layout-shell plano-header-inner">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <img
+          src="https://teep.com.br/wp-content/uploads/2023/11/cropped-cropped-teep-logo-menor-300x87.png"
+          alt="Teep"
+          width="120"
+          height="35"
+          class="h-8 w-auto shrink-0 object-contain hidden sm:block"
+        >
+        <button id="btn-voltar-admin" onclick="voltarParaAdmin()" class="hidden btn-plano btn-plano-ghost shrink-0">← Voltar</button>
+        <div class="min-w-0 border-l border-slate-200 pl-3 sm:pl-4">
+          <h1 id="nome-empresa-titulo" class="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate">Carregando...</h1>
+          <p class="text-[11px] text-slate-500 mt-0.5">Plano de atividades · TeepOEE</p>
+        </div>
       </div>
-    </div>
-    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-      <span id="empresa-user-email" class="hidden sm:inline text-xs text-slate-600 font-medium max-w-[12rem] truncate"></span>
-      <button type="button" onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-700 px-3 py-2 rounded-lg hover:bg-red-50 transition">Sair</button>
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <span id="empresa-user-email" class="hidden sm:inline text-xs text-slate-600 font-medium max-w-[12rem] truncate"></span>
+        <button type="button" onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-700 px-3 py-2 rounded-lg hover:bg-red-50 transition">Sair</button>
+      </div>
     </div>
   </header>
 
-  <main class="plano-main flex-1 max-w-7xl w-full mx-auto space-y-6">
+  <main class="flex-1 w-full">
+    <div class="plano-layout-shell plano-main space-y-6">
     
     <section class="plano-card">
       <div class="plano-section-head compact">
@@ -387,6 +392,7 @@
       </div>
     </section>
 
+    </div>
   </main>
 </div>
 

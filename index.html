@@ -233,11 +233,10 @@
           <table class="w-full text-left text-sm">
             <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-bold border-b">
               <tr>
-                <th class="p-2 border-r">Fase</th>
-                <th class="p-2 border-r">Unid. Operacional / Setor</th>
+                <th class="p-2 border-r text-center w-14">Sequência</th>
+                <th class="p-2 border-r">Setor</th>
                 <th class="p-2 border-r">Tarefa</th>
-                <th class="p-2 border-r">Horas</th>
-                <th class="p-2 border-r">Acumulado</th>
+                <th class="p-2 border-r text-center w-16">Horas</th>
                 <th id="th-acao-escopo" class="p-2 text-center w-24 hidden">Ação</th>
               </tr>
             </thead>
@@ -246,19 +245,23 @@
         </div>
         <div class="bg-gray-50 p-4 rounded-xl border flex flex-col justify-between">
           <div class="space-y-2">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Resumo Estratégico</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div class="bg-white p-3 rounded-lg border">
-                <span class="text-[11px] text-gray-500 font-bold block">COLETORES (TERMINAIS)</span>
-                <span id="totalMaquinas" class="text-2xl font-black text-gray-800">0</span>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Resumo</h4>
+            <div class="grid grid-cols-4 gap-2 pt-2">
+              <div class="bg-white p-2.5 rounded-lg border min-w-0">
+                <span class="text-[9px] text-gray-500 font-bold block leading-tight">Recursos</span>
+                <span id="totalRecursos" class="text-xl font-black text-gray-800">0</span>
               </div>
-              <div class="bg-white p-3 rounded-lg border border-green-100 bg-green-50/10">
-                <span class="text-[11px] text-green-600 font-bold block">HORAS — TERMINAIS</span>
-                <span id="totalHorasTerminais" class="text-2xl font-black text-green-700">0h</span>
+              <div class="bg-white p-2.5 rounded-lg border border-green-100 bg-green-50/10 min-w-0">
+                <span class="text-[9px] text-green-700 font-bold block leading-tight">Hr implantação recurso</span>
+                <span id="totalHorasTerminais" class="text-xl font-black text-green-700">0h</span>
               </div>
-              <div class="bg-white p-3 rounded-lg border border-gray-200 bg-gray-50/50">
-                <span class="text-[11px] text-gray-600 font-bold block">HORAS — OUTRAS TAREFAS</span>
-                <span id="totalHorasOutros" class="text-2xl font-black text-gray-800">0h</span>
+              <div class="bg-white p-2.5 rounded-lg border border-gray-200 bg-gray-50/50 min-w-0">
+                <span class="text-[9px] text-gray-600 font-bold block leading-tight">Horas outras tarefas</span>
+                <span id="totalHorasOutros" class="text-xl font-black text-gray-800">0h</span>
+              </div>
+              <div class="bg-white p-2.5 rounded-lg border border-[#5C8374]/30 bg-[#5C8374]/5 min-w-0">
+                <span class="text-[9px] text-[#5C8374] font-bold block leading-tight">Total</span>
+                <span id="totalHorasGeral" class="text-xl font-black text-[#5C8374]">0h</span>
               </div>
             </div>
           </div>
@@ -483,7 +486,7 @@
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
     <h3 id="modal-escopo-titulo" class="text-lg font-bold text-gray-800">Adicionar item ao escopo</h3>
     <form id="form-escopo" class="space-y-3">
-      <div><label class="block text-xs font-bold text-gray-500 mb-1">Fase / Ordem sequencial</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">Sequência</label><input type="number" id="escopo-ordem" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: 1"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Unidade operacional / Setor</label><input type="text" id="escopo-setor" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Produção, TI, Elétrica"></div>
       <div>
         <label class="block text-xs font-bold text-gray-500 mb-1">Tipo de dimensionamento</label>
@@ -1591,10 +1594,8 @@ function iniciarListenersProjeto() {
   db.collection('empresas').doc(currentEmpresaId).get().then(empDoc => {
     if (empDoc.exists) {
       const emp = empDoc.data();
-      const cod = formatarCodigoEmpresa(emp.codigo);
-      document.getElementById('nome-empresa-titulo').innerText = cod !== '—'
-        ? `Plano [${cod}]: ${emp.nome}`
-        : `Plano de Implantação: ${emp.nome}`;
+      document.getElementById('nome-empresa-titulo').innerText =
+        `Plano de atividades - ${emp.nome || ''}`;
     }
   });
 
@@ -1689,19 +1690,20 @@ function atualizarResumoEscopo(dados) {
   const tm = lista.reduce((s, d) => s + (tipoEscopo(d) === 'terminal' ? (Number(d.maquinas) || 0) : 0), 0);
   const hTerm = lista.reduce((s, d) => s + (tipoEscopo(d) === 'terminal' ? horasEscopo(d) : 0), 0);
   const hOutros = lista.reduce((s, d) => s + (tipoEscopo(d) !== 'terminal' ? horasEscopo(d) : 0), 0);
-  const elM = document.getElementById('totalMaquinas');
+  const elM = document.getElementById('totalRecursos');
   const elT = document.getElementById('totalHorasTerminais');
   const elO = document.getElementById('totalHorasOutros');
+  const elG = document.getElementById('totalHorasGeral');
   if (elM) elM.innerText = tm;
   if (elT) elT.innerText = hTerm + 'h';
   if (elO) elO.innerText = hOutros + 'h';
+  if (elG) elG.innerText = (hTerm + hOutros) + 'h';
 }
 
 function renderEscopoDinamicamente(dados) {
   cacheEscopo = dados;
   atualizarSelectUnidadesTarefa();
 
-  let ac=0;
   const tabela = document.getElementById('tabela');
   const thAcaoEscopo = document.getElementById('th-acao-escopo');
   const podeEditar = podeEditarProjeto();
@@ -1714,14 +1716,13 @@ function renderEscopoDinamicamente(dados) {
   }
 
   if (dados.length === 0) {
-    tabela.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">Nenhum item cadastrado no escopo da implantação.</td></tr>`;
+    tabela.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 italic">Nenhum item cadastrado no escopo da implantação.</td></tr>`;
     atualizarResumoEscopo([]);
     return;
   }
 
   dados.forEach(d => {
     const h = horasEscopo(d);
-    ac += h;
     const eid = escapeHtml(d.id);
     const setor = escapeHtml(labelSetorEscopo(d));
     const tarefa = escapeHtml(labelTarefaEscopo(d));
@@ -1737,7 +1738,6 @@ function renderEscopoDinamicamente(dados) {
         <td class="p-2 border-r">${setor}</td>
         <td class="p-2 border-r text-gray-600">${tarefa}</td>
         <td class="p-2 border-r text-center font-semibold">${h}h</td>
-        <td class="p-2 border-r font-bold text-center bg-gray-50/50">${ac}h</td>
         ${tdAcaoEscopo}
       </tr>`;
   });
@@ -1935,7 +1935,7 @@ function atualizarSelectUnidadesTarefa() {
   const atual = sel.value;
   sel.innerHTML = '<option value="">Selecione a unidade do escopo</option>';
   cacheEscopo.forEach(u => {
-    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Fase ${escapeHtml(u.ordem)}: ${escapeHtml(labelSetorEscopo(u))} — ${escapeHtml(labelTarefaEscopo(u))}</option>`;
+    sel.innerHTML += `<option value="${escapeHtml(u.id)}">Seq. ${escapeHtml(u.ordem)}: ${escapeHtml(labelSetorEscopo(u))} — ${escapeHtml(labelTarefaEscopo(u))}</option>`;
   });
   sel.innerHTML += '<option value="__outro__">Outro setor (especificar)</option>';
   if ([...sel.options].some(o => o.value === atual)) sel.value = atual;

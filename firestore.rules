@@ -54,6 +54,15 @@ service cloud.firestore {
         && (isSuperAdmin() || targetUsuarioRole(userId) != 'superadmin');
     }
 
+    // Admin do cliente pode criar utilizadores de leitura (user) na própria empresa
+    function canCreateUsuarioCliente() {
+      return isSignedIn() && hasProfile()
+        && userData().role == 'admin'
+        && userEmpresaId() != null
+        && request.resource.data.role == 'user'
+        && request.resource.data.empresaId == userEmpresaId();
+    }
+
     function isSelfPasswordDoneUpdate(userId) {
       return request.auth.uid == userId
         && resource.data.mustChangePassword == true
@@ -69,8 +78,9 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         request.auth.uid == userId || isTeepStaff()
       );
-      allow create: if isTeepStaff()
-        && (request.resource.data.role != 'superadmin' || isSuperAdmin());
+      allow create: if (isTeepStaff()
+        && (request.resource.data.role != 'superadmin' || isSuperAdmin()))
+        || canCreateUsuarioCliente();
       allow update: if canManageUsuario(userId) || isSelfPasswordDoneUpdate(userId);
       allow delete: if canManageUsuario(userId);
     }

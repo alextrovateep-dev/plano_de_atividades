@@ -453,7 +453,8 @@
     <p id="credenciais-modal-desc" class="text-xs text-gray-500">Copie o texto abaixo e envie. A senha é <strong>provisória</strong> — no primeiro login terá de definir uma nova.</p>
     <textarea id="texto-credenciais-whatsapp" readonly rows="14" class="w-full p-3 border rounded-lg text-xs font-mono bg-gray-50 text-gray-800 leading-relaxed"></textarea>
     <div class="flex flex-wrap gap-2 justify-end">
-      <button type="button" id="btn-copiar-credenciais" class="px-4 py-2 bg-[#5C8374] text-white text-xs font-bold rounded-lg hover:opacity-90">Copiar texto</button>
+      <button type="button" id="btn-copiar-credenciais" class="px-4 py-2 bg-[#5C8374] text-white text-xs font-bold rounded-lg hover:opacity-90">Copiar (WhatsApp)</button>
+      <button type="button" id="btn-email-credenciais" class="px-4 py-2 bg-slate-600 text-white text-xs font-bold rounded-lg hover:bg-slate-700">Abrir e-mail</button>
       <button type="button" onclick="fecharModalCredenciais()" class="px-4 py-2 bg-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-300">Fechar</button>
     </div>
   </div>
@@ -586,6 +587,7 @@
 <div id="modalProfissional" class="modal-overlay">
   <div class="bg-white p-6 rounded-xl max-w-md w-full shadow-xl space-y-4">
     <h3 class="text-lg font-bold text-gray-800">Alocar Profissional ao Projeto</h3>
+    <p class="text-[11px] text-gray-500">Vincula à equipa do projeto e pode criar login de leitura (e-mail + senha provisória) para enviar por WhatsApp ou e-mail.</p>
     <form id="form-profissional" class="space-y-3">
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="prof-nome" required class="w-full p-2 border rounded-lg text-sm"></div>
       <div><label class="block text-xs font-bold text-gray-500 mb-1">Função Técnico/Operacional</label><input type="text" id="prof-funcao" required class="w-full p-2 border rounded-lg text-sm" placeholder="Ex: Engenheiro de Automação"></div>
@@ -593,9 +595,30 @@
         <label class="block text-xs font-bold text-gray-500 mb-1">Organização de Origem</label>
         <select id="prof-empresa" class="w-full p-2 border rounded-lg text-sm bg-white">
           <option value="Teep">Teep (Equipe Especializada)</option>
-          <option value="Cliente">Cliente (Equipe Interna)</option>
+          <option value="Cliente" id="prof-empresa-op-cliente">Cliente (Equipe Interna)</option>
           <option value="Outra">Outra / Terceirizada</option>
         </select>
+        <p id="prof-aviso-teep" class="hidden text-[10px] text-amber-700 mt-1">Quem já tem conta Teep no painel global pode desmarcar «Criar acesso» abaixo.</p>
+      </div>
+      <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
+        <label class="flex items-center gap-2 text-[10px] text-gray-700 cursor-pointer font-semibold">
+          <input type="checkbox" id="prof-criar-acesso" checked class="rounded">
+          Criar acesso ao sistema (login deste projeto)
+        </label>
+        <div id="prof-campos-acesso" class="space-y-2">
+          <div><label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">E-mail de acesso</label><input type="email" id="prof-email" required class="w-full p-2 border rounded-lg text-sm bg-white"></div>
+          <label class="flex items-center gap-2 text-[10px] text-gray-600 cursor-pointer">
+            <input type="checkbox" id="prof-senha-provisoria" checked class="rounded">
+            Gerar <strong>senha provisória</strong> (obrigatório alterar no 1.º login)
+          </label>
+          <div class="flex gap-2 items-end">
+            <div class="flex-1">
+              <label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">Senha provisória</label>
+              <div class="campo-senha-wrap"><input type="text" id="prof-senha" required minlength="6" autocomplete="off" class="w-full p-2 border rounded-lg text-sm bg-white font-mono"><button type="button" class="btn-ver-senha" data-alvo="prof-senha" aria-label="Mostrar senha" title="Mostrar senha"><span class="icon-olho-aberto" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="icon-olho-fechado" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span></button></div>
+            </div>
+            <button type="button" id="btn-gerar-senha-prof" class="px-3 py-2 bg-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-300 shrink-0" title="Gerar outra senha">↻</button>
+          </div>
+        </div>
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="fecharModalProfissional()" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">Cancelar</button>
@@ -1025,6 +1048,16 @@ function montarTextoCredenciais(opts) {
       + blocoAcesso
       + 'Qualquer dúvida, contacte a equipa Teep.';
   }
+  if (opts.tipo === 'colaborador') {
+    const funcao = opts.funcao ? ' (*' + opts.funcao + '*)' : '';
+    return saudacao
+      + 'Foi alocado à equipa do projeto'
+      + (opts.nomeEmpresa ? ' *' + opts.nomeEmpresa + '*' : '')
+      + funcao + ' no *Plano de Implantação TeepOEE*.\n\n'
+      + 'O seu acesso permite consultar o plano de atividades (leitura).\n\n'
+      + blocoAcesso
+      + 'Qualquer dúvida, contacte o gestor do projeto ou a Teep.';
+  }
   return saudacao
     + 'A Teep disponibilizou o seu acesso ao *Plano de Implantação TeepOEE*'
     + (opts.nomeEmpresa ? ' — projeto *' + opts.nomeEmpresa + '*' : '')
@@ -1038,10 +1071,13 @@ function mostrarModalCredenciaisCliente(opts) {
   const desc = document.getElementById('credenciais-modal-desc');
   if (opts.tipo === 'teep') {
     if (titulo) titulo.textContent = 'Envie o acesso Teep (WhatsApp)';
-    if (desc) desc.innerHTML = 'Copie o texto e envie ao administrador. <strong>Não</strong> envie e-mail automático — partilhe só por mensagem. A senha é <strong>provisória</strong>.';
+    if (desc) desc.innerHTML = 'Copie o texto e envie ao administrador. <strong>Não</strong> há envio automático — use WhatsApp ou o botão de e-mail. Senha <strong>provisória</strong>.';
+  } else if (opts.tipo === 'colaborador') {
+    if (titulo) titulo.textContent = 'Envie o acesso ao colaborador';
+    if (desc) desc.innerHTML = 'Copie para <strong>WhatsApp</strong> ou use <strong>Abrir e-mail</strong>. Senha <strong>provisória</strong> — alterar no 1.º login.';
   } else {
     if (titulo) titulo.textContent = 'Envie o acesso ao cliente (WhatsApp)';
-    if (desc) desc.innerHTML = 'Copie o texto e envie ao contacto. <strong>Não</strong> envie e-mail automático — partilhe só por mensagem. A senha é <strong>provisória</strong>.';
+    if (desc) desc.innerHTML = 'Copie o texto e envie ao contacto. Use WhatsApp ou e-mail manual. Senha <strong>provisória</strong>.';
   }
   const ta = document.getElementById('texto-credenciais-whatsapp');
   if (ta) ta.value = montarTextoCredenciais(opts);
@@ -1223,6 +1259,14 @@ document.getElementById('form-trocar-senha')?.addEventListener('submit', e => {
     .finally(() => {
       if (btn) { btn.disabled = false; btn.textContent = 'Guardar e continuar'; }
     });
+});
+
+document.getElementById('btn-email-credenciais')?.addEventListener('click', () => {
+  const ta = document.getElementById('texto-credenciais-whatsapp');
+  if (!ta || !ta.value) return;
+  const subject = encodeURIComponent('Acesso — Plano de Implantação TeepOEE');
+  const body = encodeURIComponent(ta.value);
+  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
 });
 
 document.getElementById('btn-copiar-credenciais')?.addEventListener('click', () => {
@@ -2149,6 +2193,7 @@ function iniciarListenersProjeto() {
         `Plano de atividades - ${currentEmpresaNome}`;
       atualizarLogoEmpresaHeader(emp.logoUrl || null, currentEmpresaNome);
       atualizarOpcoesResponsavelTarefa();
+      atualizarOpcoesOrgProfissional();
     }
   });
 
@@ -2175,6 +2220,7 @@ function iniciarListenersProjeto() {
           <div class="min-w-0 flex-1">
             <h4 class="prof-nome">${escapeHtml(p.nome)}</h4>
             <p class="prof-org">${escapeHtml(labelOrganizacaoProfissional(p.empresa))}</p>
+            ${p.email ? `<p class="text-[10px] text-slate-400 truncate" title="${escapeHtml(p.email)}">${escapeHtml(p.email)}</p>` : ''}
             <p class="prof-funcao">${escapeHtml(p.funcao)}</p>
           </div>
           ${btnDel ? `<div class="shrink-0 -mr-1">${btnDel}</div>` : ''}
@@ -2554,22 +2600,124 @@ function labelOrganizacaoProfissional(empresa) {
   return labels[k] || k || '—';
 }
 
-function abrirModalProfissional() { document.getElementById('modalProfissional').classList.add('active'); }
-function fecharModalProfissional() { document.getElementById('modalProfissional').classList.remove('active'); document.getElementById('form-profissional').reset(); }
+function syncCamposAcessoProfissional() {
+  const criar = document.getElementById('prof-criar-acesso')?.checked !== false;
+  const box = document.getElementById('prof-campos-acesso');
+  const email = document.getElementById('prof-email');
+  const senha = document.getElementById('prof-senha');
+  if (box) box.classList.toggle('hidden', !criar);
+  if (email) email.required = criar;
+  if (senha) senha.required = criar;
+  const org = document.getElementById('prof-empresa')?.value;
+  const aviso = document.getElementById('prof-aviso-teep');
+  if (aviso) aviso.classList.toggle('hidden', org !== 'Teep');
+}
+
+function atualizarOpcoesOrgProfissional() {
+  const op = document.getElementById('prof-empresa-op-cliente');
+  if (op) op.textContent = nomeOrganizacaoCliente() + ' (Equipe Interna)';
+}
+
+function abrirModalProfissional() {
+  document.getElementById('modalProfissional').classList.add('active');
+  atualizarOpcoesOrgProfissional();
+  configurarCampoSenhaProvisoria('prof-senha-provisoria', 'prof-senha', 'btn-gerar-senha-prof');
+  syncCamposAcessoProfissional();
+}
+
+function fecharModalProfissional() {
+  document.getElementById('modalProfissional').classList.remove('active');
+  document.getElementById('form-profissional').reset();
+  syncCamposAcessoProfissional();
+}
+
+document.getElementById('prof-criar-acesso')?.addEventListener('change', syncCamposAcessoProfissional);
+document.getElementById('prof-empresa')?.addEventListener('change', syncCamposAcessoProfissional);
+
+function criarLoginColaboradorProjeto(email, senha, nome, senhaProvisoria) {
+  return secondAuth.createUserWithEmailAndPassword(email, senha)
+    .then(res => {
+      const uid = res.user.uid;
+      const ctx = contextoEmpresaAuditoria();
+      const empCodigo = cacheEmpresasDocs.find(d => d.id === currentEmpresaId)?.data()?.codigo ?? null;
+      return db.collection('usuarios').doc(uid).set({
+        email,
+        nome: nome || email,
+        role: 'user',
+        empresaId: currentEmpresaId,
+        empresaNome: ctx.empresaNome || nomeOrganizacaoCliente(),
+        empresaCodigo: empCodigo,
+        mustChangePassword: senhaProvisoria
+      }).then(() => uid);
+    });
+}
+
 document.getElementById('form-profissional').addEventListener('submit', e => {
   e.preventDefault();
-  const nome = document.getElementById('prof-nome').value;
-  const funcao = document.getElementById('prof-funcao').value;
+  const nome = document.getElementById('prof-nome').value.trim();
+  const funcao = document.getElementById('prof-funcao').value.trim();
   const empresa = document.getElementById('prof-empresa').value;
+  const criarAcesso = document.getElementById('prof-criar-acesso')?.checked !== false;
+  const email = document.getElementById('prof-email')?.value.trim() || '';
+  const senha = document.getElementById('prof-senha')?.value || '';
+  const senhaProvisoria = document.getElementById('prof-senha-provisoria')?.checked !== false;
   const ctx = contextoEmpresaAuditoria();
-  db.collection('empresas').doc(currentEmpresaId).collection('profissionais').add({ nome, funcao, empresa })
-    .then(ref => registrarAuditoria({
-      acao: 'create', entidade: 'profissional', entidadeId: ref.id,
-      empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
-      descricao: 'Alocou profissional «' + nome + '» (' + empresa + ')',
-      detalhes: { funcao, empresa }
-    }))
-    .then(() => fecharModalProfissional());
+  const btn = e.target.querySelector('button[type="submit"]');
+  if (criarAcesso && (!email || senha.length < 6)) {
+    alert('Indique e-mail e senha provisória (mín. 6 caracteres) para criar o acesso.');
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'A vincular…'; }
+
+  const payloadBase = { nome, funcao, empresa, criarAcesso: !!criarAcesso };
+  const promessa = criarAcesso
+    ? criarLoginColaboradorProjeto(email, senha, nome, senhaProvisoria)
+        .then(uid => ({ uid, email, senha, senhaProvisoria }))
+    : Promise.resolve({ uid: null, email: null, senha: null, senhaProvisoria: false });
+
+  promessa
+    .then(({ uid, email: uEmail, senha: uSenha, senhaProvisoria: sp }) => {
+      const profData = { ...payloadBase };
+      if (uid) {
+        profData.uid = uid;
+        profData.email = uEmail;
+        profData.loginAtivo = true;
+      }
+      return db.collection('empresas').doc(currentEmpresaId).collection('profissionais').add(profData)
+        .then(ref => ({ ref, uid, uEmail, uSenha, senhaProvisoria: sp }));
+    })
+    .then(({ ref, uid, uEmail, uSenha, senhaProvisoria: sp }) => {
+      if (uid) secondAuth.signOut();
+      return registrarAuditoria({
+        acao: 'create', entidade: 'profissional', entidadeId: ref.id,
+        empresaId: ctx.empresaId, empresaNome: ctx.empresaNome,
+        descricao: 'Alocou colaborador «' + nome + '»' + (uEmail ? ' com login ' + uEmail : ''),
+        detalhes: { funcao, empresa, email: uEmail || null, criarAcesso: !!uid }
+      }).then(() => ({ uEmail, uSenha, senhaProvisoria: sp, nome, funcao }));
+    })
+    .then(data => {
+      fecharModalProfissional();
+      if (data.senhaProvisoria && data.uEmail) {
+        mostrarModalCredenciaisCliente({
+          tipo: 'colaborador',
+          nomeEmpresa: ctx.empresaNome || nomeOrganizacaoCliente(),
+          email: data.uEmail,
+          senha: data.uSenha,
+          nomeContacto: data.nome,
+          funcao: data.funcao
+        });
+      }
+    })
+    .catch(err => {
+      if (err.code === 'auth/email-already-in-use') {
+        alert('Este e-mail já tem conta no sistema.\n\nUse outro e-mail ou desmarque «Criar acesso» se a pessoa já entrar com outra conta.');
+      } else {
+        alert('Erro ao alocar colaborador: ' + err.message);
+      }
+    })
+    .finally(() => {
+      if (btn) { btn.disabled = false; btn.textContent = 'Vincular'; }
+    });
 });
 function excluirProfissional(id) {
   if(confirm("Deseja desvincular este profissional do projeto?")) {

@@ -31,9 +31,14 @@ service cloud.firestore {
       return userData().empresaId;
     }
 
+    function usuarioTemEmpresaId(empresaId) {
+      return userEmpresaId() == empresaId
+        || ('empresasIds' in userData() && empresaId in userData().empresasIds);
+    }
+
     function canReadEmpresa(empresaId) {
       return isSignedIn() && hasProfile()
-        && (isTeepStaff() || userEmpresaId() == empresaId);
+        && (isTeepStaff() || usuarioTemEmpresaId(empresaId));
     }
 
     function canEditEmpresa(empresaId) {
@@ -63,6 +68,15 @@ service cloud.firestore {
         && request.resource.data.empresaId == userEmpresaId();
     }
 
+    // Vincular colaborador existente a outro projeto (empresasIds)
+    function canVincularColaboradorMultiProjeto(userId) {
+      return isSignedIn() && hasProfile()
+        && (isTeepStaff()
+          || (userData().role == 'admin'
+            && targetUsuarioRole(userId) == 'user'
+            && userEmpresaId() in request.resource.data.get('empresasIds', [])));
+    }
+
     function isSelfPasswordDoneUpdate(userId) {
       return request.auth.uid == userId
         && resource.data.mustChangePassword == true
@@ -72,16 +86,18 @@ service cloud.firestore {
         && request.resource.data.empresaId == resource.data.empresaId;
     }
 
-    // Coleção única de perfis (legado "users" só leitura/remoção durante migração)
     match /usuarios/{userId} {
-      // O próprio utilizador pode ler o perfil (login); staff Teep lê outros
       allow read: if isSignedIn() && (
-        request.auth.uid == userId || isTeepStaff()
+        request.auth.uid == userId
+        || isTeepStaff()
+        || (hasProfile() && userData().role == 'admin')
       );
       allow create: if (isTeepStaff()
         && (request.resource.data.role != 'superadmin' || isSuperAdmin()))
         || canCreateUsuarioCliente();
-      allow update: if canManageUsuario(userId) || isSelfPasswordDoneUpdate(userId);
+      allow update: if canManageUsuario(userId)
+        || isSelfPasswordDoneUpdate(userId)
+        || canVincularColaboradorMultiProjeto(userId);
       allow delete: if canManageUsuario(userId);
     }
 
@@ -103,7 +119,8 @@ service cloud.firestore {
       allow update: if isTeepStaff() || canEditEmpresa(empresaId);
 
       match /profissionais/{docId} {
-        allow read: if canReadEmpresa(empresaId);
+        allow read: if canReadEmpresa(empresaId)
+          || (isSignedIn() && hasProfile() && resource.data.uid == request.auth.uid);
         allow create, update, delete: if canEditEmpresa(empresaId);
       }
 
@@ -122,7 +139,6 @@ service cloud.firestore {
       allow read: if isTeepStaff();
     }
 
-    // Registo de auditoria: qualquer utilizador autenticado grava; só superadmin lê
     match /audit_logs/{logId} {
       allow create: if isSignedIn() && hasProfile();
       allow read: if isSuperAdmin();
